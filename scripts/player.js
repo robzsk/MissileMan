@@ -1,6 +1,6 @@
 'use strict';
 
-var METER = 32,
+var METER = 1,
   GRAVITY = 9.8 * 6, // default (exagerated) gravity
   MAXDX = 15, // default max horizontal speed (15 tiles per second)
   MAXDY = 60, // default max vertical speed   (60 tiles per second)
@@ -24,6 +24,7 @@ module.exports = function (conf) {
   player.player = obj.type == 'player';
   player.left = obj.properties.left;
   player.right = obj.properties.right;
+  player.jump = false;
   player.start = { x: obj.x, y: obj.y };
   player.killed = 0;
 

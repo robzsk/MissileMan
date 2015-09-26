@@ -16,7 +16,6 @@ module.exports = function (input) {
 
     deserialize: function (file) {
       moves = file;
-      console.log(JSON.stringify(file));
     },
     serialize: function () {
       var file = JSON.stringify(moves);

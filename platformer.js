@@ -1,12 +1,15 @@
 (function () { // module pattern
+  'use strict';
   var inputFactory = require('./scripts/input'),
     playerFactory = require('./scripts/player'),
     replayFactory = require('./scripts/replay'),
+    sceneFactory = require('./scripts/scene'),
     KEY = require('./scripts/keys');
 
   var input = inputFactory();
   var replayRecording = replayFactory(input);
   var replayInput = replayFactory();
+  var scene = sceneFactory($('#canvas'));
 
   function timestamp () {
     return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
@@ -24,24 +27,29 @@
   }
 
   var MAP = { tw: 64, th: 48 },
-    TILE = 32,
+    TILE = 1,
     COLOR = { BLACK: '#000000', YELLOW: '#ECD078', BRICK: '#D95B43', PINK: '#C02942', PURPLE: '#542437', GREY: '#333', SLATE: '#53777A', GOLD: 'gold' },
     COLORS = [ COLOR.YELLOW, COLOR.BRICK, COLOR.PINK, COLOR.PURPLE, COLOR.GREY ];
 
   var fps = 60,
     step = 1 / fps,
-    canvas = document.getElementById('canvas'),
-    ctx = canvas.getContext('2d'),
-    width = canvas.width = MAP.tw * TILE,
-    height = canvas.height = MAP.th * TILE,
-    // player = {},
     players = [],
+    avatars = [], // render
     cells = [];
 
-  var t2p = function (t) { return t * TILE;},
-    p2t = function (p) { return Math.floor(p / TILE);},
-    cell = function (x, y) { return tcell(p2t(x), p2t(y));},
-    tcell = function (tx, ty) { return cells[tx + (ty * MAP.tw)];};
+  var createCube = function (color, size) {
+    return function (s) {
+      var geometry = new THREE.BoxGeometry(s.x, s.y, s.z),
+        material = new THREE.MeshLambertMaterial({
+          color: color
+        }),
+        cube = new THREE.Mesh(geometry, material);
+      return cube;
+    }(size || {x: TILE, y: TILE, z: TILE});
+  };
+
+  var tcell = function (tx, ty) { return cells[tx + (ty * MAP.tw)];},
+    ty = function (y) { return MAP.th - y;}; // little hack to show y position in 3d space instead of canvas space
 
   var ticks = 0;
   var update = function (dt) {
@@ -54,14 +62,13 @@
     });
 
     // --temporary stuffs
-    if (ticks === 100) {
+    if (ticks === 250) {
       var tmp = JSON.parse(replayRecording.serialize());
       if (_.size(tmp) > 0) {
         replayInput = replayFactory();
         replayInput.deserialize(tmp);
         // not safe but we're testing
         players[1].setInput(replayInput);
-        console.log(replayRecording.serialize());
       }
       replayRecording.reset();
       ticks = 0;
@@ -79,7 +86,7 @@
     });
   };
 
-  function updateEntity (entity, dt) {
+  var updateEntity = function (entity, dt) {
     var wasleft = entity.dx < 0,
       wasright = entity.dx > 0,
       falling = entity.falling,
@@ -89,15 +96,19 @@
     entity.ddx = 0;
     entity.ddy = entity.gravity;
 
-    if (entity.left)
+    if (entity.left) {
       entity.ddx = entity.ddx - accel;
-    else if (wasleft)
+    }
+    else if (wasleft) {
       entity.ddx = entity.ddx + friction;
+    }
 
-    if (entity.right)
+    if (entity.right) {
       entity.ddx = entity.ddx + accel;
-    else if (wasright)
+    }
+    else if (wasright) {
       entity.ddx = entity.ddx - friction;
+    }
 
     if (entity.jump && !entity.jumping && !falling) {
       entity.ddy = entity.ddy - entity.impulse; // an instant big force impulse
@@ -114,8 +125,8 @@
       entity.dx = 0; // clamp at zero to prevent friction from making us jiggle side to side
     }
 
-    var tx = p2t(entity.x),
-      ty = p2t(entity.y),
+    var tx = Math.floor(entity.x),
+      ty = Math.floor(entity.y),
       nx = entity.x % TILE,
       ny = entity.y % TILE,
       cell = tcell(tx, ty),
@@ -126,7 +137,7 @@
     if (entity.dy > 0) {
       if ((celldown && !cell) ||
         (celldiag && !cellright && nx)) {
-        entity.y = t2p(ty);
+        entity.y = ty;
         entity.dy = 0;
         entity.falling = false;
         entity.jumping = false;
@@ -136,7 +147,7 @@
     else if (entity.dy < 0) {
       if ((cell && !celldown) ||
         (cellright && !celldiag && nx)) {
-        entity.y = t2p(ty + 1);
+        entity.y = ty + 1;
         entity.dy = 0;
         cell = celldown;
         cellright = celldiag;
@@ -147,49 +158,23 @@
     if (entity.dx > 0) {
       if ((cellright && !cell) ||
         (celldiag && !celldown && ny)) {
-        entity.x = t2p(tx);
+        entity.x = tx;
         entity.dx = 0;
       }
     }
     else if (entity.dx < 0) {
       if ((cell && !cellright) ||
         (celldown && !celldiag && ny)) {
-        entity.x = t2p(tx + 1);
+        entity.x = tx + 1;
         entity.dx = 0;
       }
     }
 
     entity.falling = ! (celldown || (nx && celldiag));
 
-  }
+  };
 
-  function render (ctx, frame, dt) {
-    ctx.clearRect(0, 0, width, height);
-    renderMap(ctx);
-    _.each(players, function (p) {
-      renderPlayer(p, ctx, dt);
-    });
-  }
-
-  function renderMap (ctx) {
-    var x, y, cell;
-    for (y = 0; y < MAP.th; y++) {
-      for (x = 0; x < MAP.tw; x++) {
-        cell = tcell(x, y);
-        if (cell) {
-          ctx.fillStyle = COLORS[cell - 1];
-          ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
-        }
-      }
-    }
-  }
-
-  function renderPlayer (p, ctx, dt) {
-    ctx.fillStyle = COLOR.YELLOW;
-    ctx.fillRect(p.x + (p.dx * dt), p.y + (p.dy * dt), TILE, TILE);
-  }
-
-  function setup (map) {
+  var setup = function (map) {
     var data = map.layers[0].data,
       objects = map.layers[1].objects,
       n, obj;
@@ -201,17 +186,41 @@
           input: (players.length === 0 ? input : {}),
           obj: obj
         }));
+        avatars.push(createCube(COLOR.YELLOW));
+        scene.add(avatars[avatars.length - 1]);
       }
     }
 
     cells = data;
-  }
+    +function () {
+      var x, y, cell, cube;
+      for (y = 0; y < MAP.th; y++) {
+        for (x = 0; x < MAP.tw; x++) {
+          cell = tcell(x, y);
+          if (cell) {
+            cube = createCube(COLORS[cell - 1]);
+            cube.position.set(x * TILE, ty(y * TILE), 0);
+            scene.add(cube);
+          }
+        }
+      }
+    }();
+  };
+
+  var renderPlayer = function (p, a, dt) {
+    a.position.set(p.x + (p.dx * dt), ty(p.y + (p.dy * dt)), 0);
+  };
+  var render = function (dt) {
+    _.each(players, function (p, i) {
+      renderPlayer(p, avatars[i], dt);
+    });
+  };
 
   var counter = 0, dt = 0, now,
     last = timestamp(),
     fpsmeter = new FPSMeter({ decimals: 0, graph: true, theme: 'dark', left: '5px' });
 
-  function frame () {
+  $(scene).on('scene.render', function () {
     fpsmeter.tickStart();
     now = timestamp();
     dt = dt + Math.min(1, (now - last) / 1000);
@@ -219,13 +228,14 @@
       dt = dt - step;
       update(step);
     }
-    render(ctx, counter, dt);
+    render(dt);
     last = now;
     counter++;
     fpsmeter.tick();
 
-    requestAnimationFrame(frame, canvas);
-  }
+    if (avatars[0])
+      scene.follow(avatars[0].position); // unsafe for tests only
+  });
 
   var onkey = function (ev, key, down) {
     switch (key) {
@@ -249,7 +259,6 @@
 
   $.get('level.json', function (req) {
     setup(JSON.parse(req));
-    frame();
   });
 
 })();

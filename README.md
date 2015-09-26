@@ -1,7 +1,7 @@
-Missile Man
+Missileman
 ==========================
 
-Missile Man is alive! and he's living in JavaScript!
+Missileman is alive! and he's living in JavaScript!
 
 SUPPORTED BROWSERS
 ==================
