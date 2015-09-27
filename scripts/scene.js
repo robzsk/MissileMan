@@ -1,12 +1,12 @@
-var zoom = 20;
+var zoom = 26;
 
 module.exports = function (canvas) {
   'use strict';
 
   var ret,
     scene = new THREE.Scene(),
-    cam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.2, zoom),
-    dlight = new THREE.DirectionalLight(0xffffff, 1),
+    cam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, zoom - 9, zoom),
+    // dlight = new THREE.DirectionalLight(0xffffff, 1),
     alight = new THREE.AmbientLight(0xffffff),
     renderer = new THREE.WebGLRenderer();
 
@@ -14,10 +14,11 @@ module.exports = function (canvas) {
   cam.updateProjectionMatrix();
 
   scene.add(cam);
-  scene.add(dlight);
+  // scene.add(dlight);
   scene.add(alight);
 
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x3e3e3e, 1);
   $('body').append(renderer.domElement);
 
   +function render () {

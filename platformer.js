@@ -27,26 +27,13 @@
   }
 
   var MAP = { tw: 64, th: 48 },
-    TILE = 1,
-    COLOR = { BLACK: '#000000', YELLOW: '#ECD078', BRICK: '#D95B43', PINK: '#C02942', PURPLE: '#542437', GREY: '#333', SLATE: '#53777A', GOLD: 'gold' },
-    COLORS = [ COLOR.YELLOW, COLOR.BRICK, COLOR.PINK, COLOR.PURPLE, COLOR.GREY ];
+    TILE = 1;
 
   var fps = 60,
     step = 1 / fps,
     players = [],
     avatars = [], // render
     cells = [];
-
-  var createCube = function (color, size) {
-    return function (s) {
-      var geometry = new THREE.BoxGeometry(s.x, s.y, s.z),
-        material = new THREE.MeshLambertMaterial({
-          color: color
-        }),
-        cube = new THREE.Mesh(geometry, material);
-      return cube;
-    }(size || {x: TILE, y: TILE, z: TILE});
-  };
 
   var tcell = function (tx, ty) { return cells[tx + (ty * MAP.tw)];},
     ty = function (y) { return MAP.th - y;}; // little hack to show y position in 3d space instead of canvas space
@@ -62,7 +49,7 @@
     });
 
     // --temporary stuffs
-    if (ticks === 250) {
+    if (ticks === 2500) {
       var tmp = JSON.parse(replayRecording.serialize());
       if (_.size(tmp) > 0) {
         replayInput = replayFactory();
@@ -186,7 +173,7 @@
           input: (players.length === 0 ? input : {}),
           obj: obj
         }));
-        avatars.push(createCube(COLOR.YELLOW));
+        avatars.push(assets.player());
         scene.add(avatars[avatars.length - 1]);
       }
     }
@@ -197,17 +184,22 @@
       for (y = 0; y < MAP.th; y++) {
         for (x = 0; x < MAP.tw; x++) {
           cell = tcell(x, y);
-          if (cell) {
-            cube = createCube(COLORS[cell - 1]);
-            cube.position.set(x * TILE, ty(y * TILE), 0);
-            scene.add(cube);
+          if (cell === 1) {
+            cube = assets.solid();
+          } else if (cell === 2) {
+            cube = assets.target();
+          } else {
+            cube = assets.empty();
           }
+          cube.position.set(x, ty(y), 0);
+          scene.add(cube);
         }
       }
     }();
   };
 
   var renderPlayer = function (p, a, dt) {
+    if (!a) return;
     a.position.set(p.x + (p.dx * dt), ty(p.y + (p.dy * dt)), 0);
   };
   var render = function (dt) {
@@ -257,8 +249,11 @@
   document.addEventListener('keydown', function (ev) { return onkey(ev, ev.keyCode, true);  }, false);
   document.addEventListener('keyup', function (ev) { return onkey(ev, ev.keyCode, false); }, false);
 
-  $.get('level.json', function (req) {
-    setup(JSON.parse(req));
+  var assets = require('./scripts/assets');
+  $(assets).on('assets.loaded', function () {
+    $.get('level.json', function (req) {
+      setup(JSON.parse(req));
+    });
   });
 
 })();
