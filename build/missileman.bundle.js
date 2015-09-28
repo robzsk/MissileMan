@@ -1,3 +1,4 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function () { // module pattern
   'use strict';
   var inputFactory = require('./scripts/input'),
@@ -253,13 +254,240 @@
   $(document).ready(function () {
     $(assets).on('assets.loaded', function () {
       $.get('level.json', function (req) {
-        if (req.layers) {
-          setup(req); // from a webserver the response is parsed already
-        } else {
-          setup(JSON.parse(req));
-        }
+        if (req.layers)
+          setup(req);
+        else setup(JSON.parse(req));
       });
     });
   });
 
 })();
+
+},{"./scripts/assets":2,"./scripts/input":3,"./scripts/keys":4,"./scripts/player":5,"./scripts/replay":6,"./scripts/scene":7}],2:[function(require,module,exports){
+module.exports = function () {
+  'use strict';
+
+  var assets,
+    manager = new THREE.LoadingManager(),
+    loader = new THREE.JSONLoader(manager),
+    mesh = {};
+
+  var loadMesh = function (name, mf) {
+    loader.load('assets/' + mf + '.json', function (geom) {
+      mesh[name] = new THREE.Mesh(geom, new THREE.MeshDepthMaterial());
+    });
+  };
+
+  manager.onLoad = function () {
+    $(assets).trigger('assets.loaded');
+  };
+
+  loadMesh('empty', 'empty');
+  loadMesh('solid', 'solid');
+
+  var createCube = function (color) {
+    var geometry = new THREE.BoxGeometry(1, 1, 1),
+      material = new THREE.MeshBasicMaterial({ color: color }),
+      cube = new THREE.Mesh(geometry, material);
+    return cube;
+  };
+
+  assets = {
+    empty: function (n) {
+      return mesh['empty'].clone();
+    },
+
+    solid: function () {
+      console.log('ererer');
+      return mesh['solid'].clone();
+    },
+
+    target: function () {
+      return createCube(0xac4442);
+    },
+
+    player: function () {
+      return createCube(0x0179d5);
+    }
+
+  };
+
+  return assets;
+
+}();
+
+},{}],3:[function(require,module,exports){
+'use strict';
+
+module.exports = function () {
+  var moves = [],
+    lastLeft = false,
+    lastRight = false,
+    lastJump = false,
+    left = false,
+    right = false,
+    jump = false;
+
+  var input = {
+    setLeft: function (down) {
+      left = down;
+    },
+
+    setRight: function (down) {
+      right = down;
+    },
+
+    setJump: function (down) {
+      jump = down;
+    },
+
+    update: function (tick) {
+      var move;
+      if (lastLeft !== left || lastRight !== right || lastJump !== jump) {
+        $(input).trigger('input.move', {left: left,right: right,jump: jump,tick: tick});
+        lastLeft = left;
+        lastRight = right;
+        lastJump = jump;
+      }
+    }
+
+  };
+
+  return input;
+};
+
+},{}],4:[function(require,module,exports){
+module.exports = {
+  SPACE: 32,
+  LEFT: 37,
+  UP: 38,
+  RIGHT: 39,
+  DOWN: 40
+};
+
+},{}],5:[function(require,module,exports){
+'use strict';
+
+var METER = 1,
+  GRAVITY = 9.8 * 6, // default (exagerated) gravity
+  MAXDX = 15, // default max horizontal speed (15 tiles per second)
+  MAXDY = 60, // default max vertical speed   (60 tiles per second)
+  ACCEL = 1 / 2, // default take 1/2 second to reach maxdx (horizontal acceleration)
+  FRICTION = 1 / 6, // default take 1/6 second to stop from maxdx (horizontal friction)
+  IMPULSE = 1500; // default player jump impulse
+
+module.exports = function (conf) {
+  var obj = conf.obj;
+  var player = {};
+  player.x = obj.x;
+  player.y = obj.y;
+  player.dx = 0;
+  player.dy = 0;
+  player.gravity = METER * (obj.properties.gravity || GRAVITY);
+  player.maxdx = METER * (obj.properties.maxdx || MAXDX);
+  player.maxdy = METER * (obj.properties.maxdy || MAXDY);
+  player.impulse = METER * (obj.properties.impulse || IMPULSE);
+  player.accel = player.maxdx / (obj.properties.accel || ACCEL);
+  player.friction = player.maxdx / (obj.properties.friction || FRICTION);
+  player.player = obj.type == 'player';
+  player.left = obj.properties.left;
+  player.right = obj.properties.right;
+  player.jump = false;
+  player.start = { x: obj.x, y: obj.y };
+  player.killed = 0;
+
+  player.setInput = function (i) {
+    $(i).on('input.move', function (e, m) {
+      player.left = m.left;
+      player.right = m.right;
+      player.jump = m.jump;
+    });
+  };
+
+  if (conf.input) {
+    player.setInput(conf.input);
+  }
+
+  return player;
+};
+
+},{}],6:[function(require,module,exports){
+'use strict';
+
+module.exports = function (input) {
+  var moves = {};
+
+  if (input) {
+    $(input).on('input.move', function (e, m) {
+      moves['_' + m.tick] = m;
+    });
+  }
+
+  var replay = {
+    reset: function () {
+      moves = {};
+    },
+
+    deserialize: function (file) {
+      moves = file;
+    },
+    serialize: function () {
+      var file = JSON.stringify(moves);
+      return file;
+    },
+
+    update: function (tick) {
+      var m = moves['_' + tick];
+      if (m) {
+        $(replay).trigger('input.move', m);
+      }
+    }
+  };
+  return replay;
+};
+
+},{}],7:[function(require,module,exports){
+var zoom = 26;
+
+module.exports = function (canvas) {
+  'use strict';
+
+  var ret,
+    scene = new THREE.Scene(),
+    cam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, zoom - 9, zoom),
+    // dlight = new THREE.DirectionalLight(0xffffff, 1),
+    alight = new THREE.AmbientLight(0xffffff),
+    renderer = new THREE.WebGLRenderer();
+
+  cam.position.set(0, 0, zoom);
+  cam.updateProjectionMatrix();
+
+  scene.add(cam);
+  // scene.add(dlight);
+  scene.add(alight);
+
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x3e3e3e, 1);
+  $('body').append(renderer.domElement);
+
+  +function render () {
+    requestAnimationFrame(render);
+    $(ret).trigger('scene.render');
+    renderer.render(scene, cam);
+  }();
+
+  ret = {
+    add: function (m) {
+      scene.add(m);
+    },
+    follow: function (p) {
+      cam.position.set(p.x, p.y, zoom);
+    },
+    remove: function (m) {
+      scene.remove(m);
+    }
+  };
+  return ret;
+};
+
+},{}]},{},[1]);
