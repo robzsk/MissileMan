@@ -209,12 +209,9 @@
     });
   };
 
-  var counter = 0, dt = 0, now,
-    last = timestamp(),
-    fpsmeter = new FPSMeter({ decimals: 0, graph: true, theme: 'dark', left: '5px' });
+  var dt = 0, now, last = timestamp();
 
   $(scene).on('scene.render', function () {
-    fpsmeter.tickStart();
     now = timestamp();
     dt = dt + Math.min(1, (now - last) / 1000);
     while(dt > step) {
@@ -223,8 +220,6 @@
     }
     render(dt);
     last = now;
-    counter++;
-    fpsmeter.tick();
 
     if (avatars[0])
       scene.follow(avatars[0].position); // unsafe for tests only
