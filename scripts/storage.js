@@ -1,19 +1,26 @@
 'use strict';
 
 var storage = function () {
+  'use strict';
   var s = function (k, v) {
     if (k && v) {
-      simpleStorage.set(k, v);
+      localStorage.setItem(k, JSON.stringify(v));
     } else if (k && !v) {
-      return simpleStorage.get(k);
+      return JSON.parse(localStorage.getItem(k));
     } else {
-      console.log('ERROR: Key was undefined while using local storage.');
+      console.error('Key was undefined while using local storage.');
     }
   };
-
   return {
-    saveReplay: function (v) {
-      return s('saveReplay', v);
+    test: function (v) {
+      return s('test', v);
+    },
+    error: function () {
+      return s();
     }
   };
 }();
+
+storage.test({nothing: 'supplied'});
+
+console.log(storage.test().nothing);

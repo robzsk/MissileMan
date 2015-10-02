@@ -55,8 +55,8 @@
       if (_.size(tmp) > 0) {
         replayInput = replayFactory();
         replayInput.deserialize(tmp);
-        // not safe but we're testing
-        players[1].setInput(replayInput);
+        // not safe but we're testing05
+        players[1].setInput(replayInpu0t);
       }
       replayRecording.reset();
       ticks = 0;
