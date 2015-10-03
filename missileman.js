@@ -3,12 +3,15 @@
 
   var DEFAULT_LEVEL = 'level.json';
 
-  var inputFactory = require('./scripts/input'),
+  var overlay = require('./scripts/overlay'),
+    inputFactory = require('./scripts/input'),
     playerFactory = require('./scripts/player'),
     replayFactory = require('./scripts/replay'),
     assets = require('./scripts/assets'),
     world = require('./scripts/world'),
     KEY = require('./scripts/keys');
+
+  overlay.fadeFromBlack();
 
   var player,
     spawn, // temporary player spawner
@@ -70,14 +73,20 @@
     });
   });
 
-  $(world).on('world.target.destroyed', function (e, p) {
+  $(world).on('world.player.killed', function (e, p) {
     var replayInput;
-    if (player === p) {
+    if (player === p) { // TODO: or if world isComplete
       replayInput = replayFactory();
       replayInput.deserialize(JSON.parse(replayRecording.serialize())); // TODO: use a copy from method? meantime this is a good unit test
       replays.push(replayInput);
-      replayRecording.reset();
-      loadWorld(DEFAULT_LEVEL);
+      setTimeout(function () {
+        if (world.isComplete()) {
+          replays = [];
+        }
+        replayRecording.reset();
+        loadWorld(DEFAULT_LEVEL);
+        overlay.fadeFromBlack();
+      }, 1000);
     }
   });
 

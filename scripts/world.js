@@ -38,11 +38,16 @@ module.exports = function () {
   };
 
   var collideTargets = function (entity) {
-    _.each(targets, function (t) {
+    _.find(targets, function (t) {
       if (overlap(entity.x, entity.y, 1, 1, t.x, t.y, 1, 1)) {
-        // TODO: send out the target too? need to be safe not to remove the target in this loop
-        $(world).trigger('world.target.destroyed', entity);
+        scene.remove(entity.avatar);
+        scene.remove(t.avatar);
+        targets = _.without(targets, _.findWhere(targets, t));
+        players = _.without(players, _.findWhere(players, entity));
+        $(world).trigger('world.player.killed', entity);
+        return true;
       }
+      return false;
     });
   };
 
@@ -179,6 +184,7 @@ module.exports = function () {
     addTarget: function (target) {
       var cube = assets.cubeTarget();
       targets.push(target);
+      target.avatar = cube;
       cube.position.set(target.x, ty(target.y), 0);
       scene.add(cube);
     },
@@ -204,6 +210,10 @@ module.exports = function () {
           scene.add(cube);
         }
       }
+    },
+
+    isComplete: function () {
+      return targets.length === 0;
     }
 
   };
