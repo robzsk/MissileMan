@@ -5,7 +5,8 @@ module.exports = function (canvas) {
 
   var stats = function () {
     var s = {begin: function () {},end: function () {}};
-    if (Stats) {
+
+    if (typeof Stats !== 'undefined') {
       s = new Stats();
       s.setMode(0);
       s.domElement.style.position = 'absolute';

@@ -9,7 +9,7 @@ app.on('ready', function () {
     // frame: false,
     // toolbar: false,
     // 'accept-first-mouse': true,
-    // transparent: true,
+    transparent: true,
     // 'skip-taskbar': true,
     'auto-hide-menu-bar': true,
     'enable-larger-than-screen': true,
@@ -21,8 +21,3 @@ app.on('ready', function () {
   mainWindow.loadUrl('file://' + __dirname + '/index.html');
   client.create(mainWindow);
 });
-
-// var size = d.workArea;
-//   var w = new BrowserWindow();
-//   w.setMenuBarVisibility(false);
-//   w.setAutoHideMenuBar(true);

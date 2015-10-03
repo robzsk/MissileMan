@@ -1,6 +1,6 @@
 'use strict';
 
-var storage = function () {
+module.exports = function () {
   'use strict';
   var s = function (k, v) {
     if (k && v) {
@@ -20,7 +20,3 @@ var storage = function () {
     }
   };
 }();
-
-storage.test({nothing: 'supplied'});
-
-console.log(storage.test().nothing);
