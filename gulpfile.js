@@ -29,7 +29,7 @@ gulp.task('browserify', function () {
     .pipe(gulp.dest('./build/assets'));
   gulp.src('./level.json')
     .pipe(gulp.dest('./build'));
-  return browserify('platformer.js')
+  return browserify('missileman.js')
     .bundle()
     .pipe(source('missileman.bundle.js'))
     .pipe(gulp.dest('./build/'));
