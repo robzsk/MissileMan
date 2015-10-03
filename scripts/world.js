@@ -5,7 +5,6 @@ module.exports = function () {
     TILE = 1;
 
   var players = [],
-    avatars = [], // render
     targets = [],
     cells = [];
 
@@ -32,19 +31,9 @@ module.exports = function () {
     ((y2 + h2) < y1));
   };
 
-  var renderPlayer = function (p, a, dt) {
-    if (!a) return;
-    a.position.set(p.x + (p.dx * dt), ty(p.y + (p.dy * dt)), 0);
-  };
   var render = function (dt) {
-    _.each(players, function (p, i) {
-      renderPlayer(p, avatars[i], dt);
-    });
-  };
-
-  var killPlayers = function () {
     _.each(players, function (p) {
-      p.reset();
+      p.avatar.position.set(p.x + (p.dx * dt), ty(p.y + (p.dy * dt)), 0);
     });
   };
 
@@ -106,7 +95,7 @@ module.exports = function () {
     entity.falling = ! (celldown || (nx && celldiag));
   };
 
-  var updateEntity = function (entity, dt) {
+  var updatePlayer = function (entity, dt) {
     var wasleft = entity.dx < 0,
       wasright = entity.dx > 0,
       falling = entity.falling,
@@ -149,16 +138,17 @@ module.exports = function () {
     collideTargets(entity);
   };
 
-  var fps = 60,
-    step = 1 / fps;
-  var dt = 0, now, last = timestamp();
+  var step = 1 / 60,
+    dt = 0,
+    now,
+    last = timestamp();
 
   var ticks = 0;
   var update = function (dt) {
     $(world).trigger('world.update', ticks);
     ticks += 1;
     _.each(players, function (p) {
-      updateEntity(p, dt);
+      updatePlayer(p, dt);
     });
   };
 
@@ -172,14 +162,18 @@ module.exports = function () {
     render(dt);
     last = now;
 
-    if (avatars[0])
-      scene.follow(avatars[0].position); // unsafe for tests only
+    if (players[0]) {
+      scene.follow(players[0].avatar.position);
+    }
   });
 
   world = {
-    reset: function () {
+    clear: function () {
       ticks = 0;
-      killPlayers();
+      players = [];
+      targets = [];
+      cells = [];
+      scene.clear();
     },
 
     addTarget: function (target) {
@@ -191,8 +185,8 @@ module.exports = function () {
 
     addPlayer: function (player) {
       players.push(player);
-      avatars.push(assets.cubePlayer());
-      scene.add(avatars[avatars.length - 1]);
+      player.avatar = assets.cubePlayer();
+      scene.add(player.avatar);
     },
 
     addBlocks: function (blocks) {

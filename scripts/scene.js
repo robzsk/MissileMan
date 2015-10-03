@@ -52,6 +52,12 @@ module.exports = function (canvas) {
     },
     remove: function (m) {
       scene.remove(m);
+    },
+    clear: function () {
+      var children = _.clone(scene.children);
+      _.each(children, function (child) {
+        scene.remove(child);
+      });
     }
   };
   return ret;

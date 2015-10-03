@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  var DEFAULT_LEVEL = 'level.json';
+
   var inputFactory = require('./scripts/input'),
     playerFactory = require('./scripts/player'),
     replayFactory = require('./scripts/replay'),
@@ -8,12 +10,11 @@
     world = require('./scripts/world'),
     KEY = require('./scripts/keys');
 
-  var player;
-  var spawn; // temporary player spawner
-
-  var input = inputFactory();
-  var replayRecording = replayFactory(input);
-  var replays = [];
+  var player,
+    spawn, // temporary player spawner
+    input = inputFactory(),
+    replayRecording = replayFactory(input),
+    replays = [];
 
   var setup = function (map) {
     var data = map.layers[0].data,
@@ -39,6 +40,29 @@
     world.addBlocks(data);
   };
 
+  var loadWorld = function (levelFile) {
+    var loadLevel = function (callback) {
+        $.get(levelFile, function (req) {
+          if (req.layers) {
+            setup(req); // from a webserver the response is parsed already
+          } else {
+            setup(JSON.parse(req));
+          }
+          callback();
+        });
+      },
+      addReplays = function () {
+        _.each(replays, function (r) {
+          world.addPlayer(playerFactory({
+            input: r,
+            obj: spawn
+          }));
+        });
+      };
+    world.clear();
+    loadLevel(addReplays);
+  };
+
   $(world).on('world.update', function (e, ticks) {
     input.update(ticks);
     _.each(replays, function (r) {
@@ -47,48 +71,42 @@
   });
 
   $(world).on('world.target.destroyed', function (e, p) {
-    if (player !== p) return;
-    var replayInput = replayFactory();
-    replayInput.deserialize(JSON.parse(replayRecording.serialize())); // TODO: use a copy from method? meantime this is a good unit test
-    world.addPlayer(playerFactory({
-      input: replayInput,
-      obj: spawn
-    }));
-    replays.push(replayInput);
-    replayRecording.reset();
-    world.reset();
+    var replayInput;
+    if (player === p) {
+      replayInput = replayFactory();
+      replayInput.deserialize(JSON.parse(replayRecording.serialize())); // TODO: use a copy from method? meantime this is a good unit test
+      replays.push(replayInput);
+      replayRecording.reset();
+      loadWorld(DEFAULT_LEVEL);
+    }
   });
 
-  var onkey = function (ev, key, down) {
-    switch (key) {
-      case KEY.LEFT:
-        input.setLeft(down);
-        ev.preventDefault();
-        return false;
-      case KEY.RIGHT:
-        input.setRight(down);
-        ev.preventDefault();
-        return false;
-      case KEY.UP:
-        input.setJump(down);
-        ev.preventDefault();
-        return false;
-    }
-  };
+  var inputHandler = function () {
+    var onkey = function (ev, key, down) {
+      switch (key) {
+        case KEY.LEFT:
+          input.setLeft(down);
+          ev.preventDefault();
+          return false;
+        case KEY.RIGHT:
+          input.setRight(down);
+          ev.preventDefault();
+          return false;
+        case KEY.UP:
+          input.setJump(down);
+          ev.preventDefault();
+          return false;
+      }
+    };
 
-  document.addEventListener('keydown', function (ev) { return onkey(ev, ev.keyCode, true);  }, false);
-  document.addEventListener('keyup', function (ev) { return onkey(ev, ev.keyCode, false); }, false);
+    document.addEventListener('keydown', function (ev) { return onkey(ev, ev.keyCode, true);  }, false);
+    document.addEventListener('keyup', function (ev) { return onkey(ev, ev.keyCode, false); }, false);
+  }();
 
   $(document).ready(function () {
     assets.load();
     $(assets).on('assets.loaded', function () {
-      $.get('level.json', function (req) {
-        if (req.layers) {
-          setup(req); // from a webserver the response is parsed already
-        } else {
-          setup(JSON.parse(req));
-        }
-      });
+      loadWorld(DEFAULT_LEVEL);
     });
   });
 
