@@ -4,12 +4,15 @@
 
   var DEFAULT_LEVEL = 'level.json';
 
-  var inputFactory = require('./scripts/input'),
+  var overlay = require('./scripts/overlay'),
+    inputFactory = require('./scripts/input'),
     playerFactory = require('./scripts/player'),
     replayFactory = require('./scripts/replay'),
     assets = require('./scripts/assets'),
     world = require('./scripts/world'),
     KEY = require('./scripts/keys');
+
+  overlay.fadeFromBlack();
 
   var player,
     spawn, // temporary player spawner
@@ -71,14 +74,20 @@
     });
   });
 
-  $(world).on('world.target.destroyed', function (e, p) {
+  $(world).on('world.player.killed', function (e, p) {
     var replayInput;
-    if (player === p) {
+    if (player === p) { // TODO: or if world isComplete
       replayInput = replayFactory();
       replayInput.deserialize(JSON.parse(replayRecording.serialize())); // TODO: use a copy from method? meantime this is a good unit test
       replays.push(replayInput);
-      replayRecording.reset();
-      loadWorld(DEFAULT_LEVEL);
+      setTimeout(function () {
+        if (world.isComplete()) {
+          replays = [];
+        }
+        replayRecording.reset();
+        loadWorld(DEFAULT_LEVEL);
+        overlay.fadeFromBlack();
+      }, 1000);
     }
   });
 
@@ -113,7 +122,7 @@
 
 })();
 
-},{"./scripts/assets":2,"./scripts/input":3,"./scripts/keys":4,"./scripts/player":5,"./scripts/replay":6,"./scripts/world":8}],2:[function(require,module,exports){
+},{"./scripts/assets":2,"./scripts/input":3,"./scripts/keys":4,"./scripts/overlay":5,"./scripts/player":6,"./scripts/replay":7,"./scripts/world":9}],2:[function(require,module,exports){
 'use strict';
 
 module.exports = function () {
@@ -214,6 +223,31 @@ module.exports = {
 };
 
 },{}],5:[function(require,module,exports){
+module.exports = function () {
+  var fader = function () {
+    var f = $('<div/>')
+      .css({
+        position: 'fixed',
+        backgroundColor: 'black',
+        height: '100%',
+        width: '100%',
+        margin: 0,
+        padding: 0,
+      // opacity: 0
+      });
+    $('body').append(f);
+    return f;
+  }();
+
+  return {
+    fadeFromBlack: function () {
+      fader.css({opacity: 1});
+      fader.stop().animate({opacity: 0}, 600);
+    }
+  };
+}();
+
+},{}],6:[function(require,module,exports){
 'use strict';
 
 var METER = 1,
@@ -242,11 +276,9 @@ module.exports = function (conf) {
   player.right = obj.properties.right;
   player.jump = false;
   player.start = { x: obj.x, y: obj.y };
-  player.killed = 0;
 
   player.reset = function () {
     player.jump = player.left = player.right = false;
-    player.killed = 0;
     player.dx = player.dy = 0;
     player.x = player.start.x;
     player.y = player.start.y;
@@ -267,7 +299,7 @@ module.exports = function (conf) {
   return player;
 };
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 module.exports = function (input) {
@@ -302,7 +334,7 @@ module.exports = function (input) {
   return replay;
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var zoom = 26;
 
 module.exports = function (canvas) {
@@ -368,7 +400,7 @@ module.exports = function (canvas) {
   return ret;
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports = function () {
   'use strict';
   var world;
@@ -409,11 +441,16 @@ module.exports = function () {
   };
 
   var collideTargets = function (entity) {
-    _.each(targets, function (t) {
+    _.find(targets, function (t) {
       if (overlap(entity.x, entity.y, 1, 1, t.x, t.y, 1, 1)) {
-        // TODO: send out the target too? need to be safe not to remove the target in this loop
-        $(world).trigger('world.target.destroyed', entity);
+        scene.remove(entity.avatar);
+        scene.remove(t.avatar);
+        targets = _.without(targets, _.findWhere(targets, t));
+        players = _.without(players, _.findWhere(players, entity));
+        $(world).trigger('world.player.killed', entity);
+        return true;
       }
+      return false;
     });
   };
 
@@ -550,6 +587,7 @@ module.exports = function () {
     addTarget: function (target) {
       var cube = assets.cubeTarget();
       targets.push(target);
+      target.avatar = cube;
       cube.position.set(target.x, ty(target.y), 0);
       scene.add(cube);
     },
@@ -575,10 +613,14 @@ module.exports = function () {
           scene.add(cube);
         }
       }
+    },
+
+    isComplete: function () {
+      return targets.length === 0;
     }
 
   };
   return world;
 }();
 
-},{"./assets":2,"./scene":7}]},{},[1]);
+},{"./assets":2,"./scene":8}]},{},[1]);
