@@ -6,6 +6,7 @@ module.exports = function () {
 
   var players = [],
     avatars = [], // render
+    targets = [],
     cells = [];
 
   var assets = require('./assets'),
@@ -25,10 +26,10 @@ module.exports = function () {
   var ty = function (y) { return MAP.th - y;}; // little hack to show y position in 3d space instead of canvas space
 
   var overlap = function (x1, y1, w1, h1, x2, y2, w2, h2) {
-    return !(((x1 + w1 - 1) < x2) ||
-    ((x2 + w2 - 1) < x1) ||
-    ((y1 + h1 - 1) < y2) ||
-    ((y2 + h2 - 1) < y1));
+    return !(((x1 + w1) < x2) ||
+    ((x2 + w2) < x1) ||
+    ((y1 + h1) < y2) ||
+    ((y2 + h2) < y1));
   };
 
   var renderPlayer = function (p, a, dt) {
@@ -43,51 +44,20 @@ module.exports = function () {
 
   var killPlayers = function () {
     _.each(players, function (p) {
-      p.x = p.start.x;
-      p.y = p.start.y;
-      p.dx = p.dy = 0;
+      p.reset();
     });
   };
 
-  var updateEntity = function (entity, dt) {
-    var wasleft = entity.dx < 0,
-      wasright = entity.dx > 0,
-      falling = entity.falling,
-      friction = entity.friction * (falling ? 0.5 : 1),
-      accel = entity.accel * (falling ? 0.5 : 1);
+  var collideTargets = function (entity) {
+    _.each(targets, function (t) {
+      if (overlap(entity.x, entity.y, 1, 1, t.x, t.y, 1, 1)) {
+        // TODO: send out the target too? need to be safe not to remove the target in this loop
+        $(world).trigger('world.target.destroyed', entity);
+      }
+    });
+  };
 
-    entity.ddx = 0;
-    entity.ddy = entity.gravity;
-
-    if (entity.left) {
-      entity.ddx = entity.ddx - accel;
-    }
-    else if (wasleft) {
-      entity.ddx = entity.ddx + friction;
-    }
-
-    if (entity.right) {
-      entity.ddx = entity.ddx + accel;
-    }
-    else if (wasright) {
-      entity.ddx = entity.ddx - friction;
-    }
-
-    if (entity.jump && !entity.jumping && !falling) {
-      entity.ddy = entity.ddy - entity.impulse; // an instant big force impulse
-      entity.jumping = true;
-    }
-
-    entity.x = entity.x + (dt * entity.dx);
-    entity.y = entity.y + (dt * entity.dy);
-    entity.dx = bound(entity.dx + (dt * entity.ddx), -entity.maxdx, entity.maxdx);
-    entity.dy = bound(entity.dy + (dt * entity.ddy), -entity.maxdy, entity.maxdy);
-
-    if ((wasleft && (entity.dx > 0)) ||
-      (wasright && (entity.dx < 0))) {
-      entity.dx = 0; // clamp at zero to prevent friction from making us jiggle side to side
-    }
-
+  var collideCells = function (entity) {
     var tx = Math.floor(entity.x),
       ty = Math.floor(entity.y),
       nx = entity.x % TILE,
@@ -134,7 +104,49 @@ module.exports = function () {
     }
 
     entity.falling = ! (celldown || (nx && celldiag));
+  };
 
+  var updateEntity = function (entity, dt) {
+    var wasleft = entity.dx < 0,
+      wasright = entity.dx > 0,
+      falling = entity.falling,
+      friction = entity.friction * (falling ? 0.5 : 1),
+      accel = entity.accel * (falling ? 0.5 : 1);
+
+    entity.ddx = 0;
+    entity.ddy = entity.gravity;
+
+    if (entity.left) {
+      entity.ddx = entity.ddx - accel;
+    }
+    else if (wasleft) {
+      entity.ddx = entity.ddx + friction;
+    }
+
+    if (entity.right) {
+      entity.ddx = entity.ddx + accel;
+    }
+    else if (wasright) {
+      entity.ddx = entity.ddx - friction;
+    }
+
+    if (entity.jump && !entity.jumping && !falling) {
+      entity.ddy = entity.ddy - entity.impulse; // an instant big force impulse
+      entity.jumping = true;
+    }
+
+    entity.x = entity.x + (dt * entity.dx);
+    entity.y = entity.y + (dt * entity.dy);
+    entity.dx = bound(entity.dx + (dt * entity.ddx), -entity.maxdx, entity.maxdx);
+    entity.dy = bound(entity.dy + (dt * entity.ddy), -entity.maxdy, entity.maxdy);
+
+    if ((wasleft && (entity.dx > 0)) ||
+      (wasright && (entity.dx < 0))) {
+      entity.dx = 0; // clamp at zero to prevent friction from making us jiggle side to side
+    }
+
+    collideCells(entity);
+    collideTargets(entity);
   };
 
   var fps = 60,
@@ -165,15 +177,24 @@ module.exports = function () {
   });
 
   world = {
-    clear: function () {
+    reset: function () {
       ticks = 0;
       killPlayers();
     },
+
+    addTarget: function (target) {
+      var cube = assets.cubeTarget();
+      targets.push(target);
+      cube.position.set(target.x, ty(target.y), 0);
+      scene.add(cube);
+    },
+
     addPlayer: function (player) {
       players.push(player);
       avatars.push(assets.cubePlayer());
       scene.add(avatars[avatars.length - 1]);
     },
+
     addBlocks: function (blocks) {
       cells = blocks;
       var x, y, cell, cube;
@@ -182,8 +203,6 @@ module.exports = function () {
           cell = tcell(x, y);
           if (cell === 1) {
             cube = assets.cubeSolid();
-          } else if (cell === 2) {
-            cube = assets.cubeTarget();
           } else {
             cube = assets.cubeEmpty();
           }
@@ -192,6 +211,7 @@ module.exports = function () {
         }
       }
     }
+
   };
   return world;
 }();

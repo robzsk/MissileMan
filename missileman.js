@@ -1,5 +1,6 @@
-(function () { // module pattern
+(function () {
   'use strict';
+
   var inputFactory = require('./scripts/input'),
     playerFactory = require('./scripts/player'),
     replayFactory = require('./scripts/replay'),
@@ -7,9 +8,12 @@
     world = require('./scripts/world'),
     KEY = require('./scripts/keys');
 
+  var player;
+  var spawn; // temporary player spawner
+
   var input = inputFactory();
   var replayRecording = replayFactory(input);
-  var replayInput = replayFactory();
+  var replays = [];
 
   var setup = function (map) {
     var data = map.layers[0].data,
@@ -19,12 +23,17 @@
     for (n = 0; n < objects.length; n++) {
       obj = objects[n];
       if (obj.type === 'player') {
-        world.addPlayer(playerFactory({
-          input: (input),
+        spawn = obj; // temporary
+        player = playerFactory({
+          input: input,
           obj: obj
-        }));
+        });
+        world.addPlayer(player);
+      } else if (obj.type === 'target') {
+        world.addTarget({
+          x: obj.x, y: obj.y
+        });
       }
-      world.clear();
     }
 
     world.addBlocks(data);
@@ -32,12 +41,22 @@
 
   $(world).on('world.update', function (e, ticks) {
     input.update(ticks);
-    replayInput.update(ticks);
+    _.each(replays, function (r) {
+      r.update(ticks);
+    });
+  });
 
-    if (ticks === 2500) {
-      world.clear();
-    }
-
+  $(world).on('world.target.destroyed', function (e, p) {
+    if (player !== p) return;
+    var replayInput = replayFactory();
+    replayInput.deserialize(JSON.parse(replayRecording.serialize())); // TODO: use a copy from method? meantime this is a good unit test
+    world.addPlayer(playerFactory({
+      input: replayInput,
+      obj: spawn
+    }));
+    replays.push(replayInput);
+    replayRecording.reset();
+    world.reset();
   });
 
   var onkey = function (ev, key, down) {

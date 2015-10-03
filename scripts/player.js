@@ -28,6 +28,14 @@ module.exports = function (conf) {
   player.start = { x: obj.x, y: obj.y };
   player.killed = 0;
 
+  player.reset = function () {
+    player.jump = player.left = player.right = false;
+    player.killed = 0;
+    player.dx = player.dy = 0;
+    player.x = player.start.x;
+    player.y = player.start.y;
+  };
+
   player.setInput = function (i) {
     $(i).on('input.move', function (e, m) {
       player.left = m.left;
