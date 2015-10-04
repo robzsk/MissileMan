@@ -2,8 +2,10 @@
 
 var gulp = require('gulp'),
   electron = require('electron-connect').server.create(),
+  uglify = require('gulp-uglify'),
   browserify = require('browserify'),
-  source = require('vinyl-source-stream');
+  source = require('vinyl-source-stream'),
+  buffer = require('vinyl-buffer');
 
 gulp.task('serve', function () {
   // Start browser process
@@ -32,6 +34,8 @@ gulp.task('browserify', function () {
   return browserify('missileman.js')
     .bundle()
     .pipe(source('missileman.bundle.js'))
+    .pipe(buffer())
+    .pipe(uglify())
     .pipe(gulp.dest('./build/'));
 });
 

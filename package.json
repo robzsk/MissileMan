@@ -1,22 +1,27 @@
 {
-  "name": "missileman",
+  "name": "Missileman",
   "version": "0.0.1",
-  "description": "MissileMan lives! in JavaScript!",
+  "description": "Missileman lives! in JavaScript!",
   "main": "index.js",
   "dependencies": {
     "electron-connect": "^0.3.3",
     "electron-prebuilt": "^0.33.2",
     "gulp": "^3.9.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "browserify": "^11.2.0",
+    "gulp-uglify": "^1.4.1",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/robzsk/MissileMan.git"
+    "url": "git+https://github.com/robzsk/Missileman.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/robzsk/MissileMan/issues"
+    "url": "https://github.com/robzsk/Missileman/issues"
   },
-  "homepage": "https://github.com/robzsk/MissileMan#readme"
+  "homepage": "https://github.com/robzsk/Missileman#readme"
 }

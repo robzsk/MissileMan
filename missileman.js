@@ -6,22 +6,17 @@
   var overlay = require('./scripts/overlay'),
     inputFactory = require('./scripts/input'),
     playerFactory = require('./scripts/player'),
-    replayFactory = require('./scripts/replay'),
     assets = require('./scripts/assets'),
     world = require('./scripts/world'),
-    loop = require('./scripts/loop'),
-    inputHandler = require('./scripts/inputHandler');
+    loop = require('./scripts/loop');
 
   overlay.fadeFromBlack();
   overlay.showTitle();
 
   var player,
     spawn, // temporary player spawner
-    input = inputFactory(),
-    replayRecording = replayFactory(input),
+    input = inputFactory({ keys: { left: 37, right: 39, jump: 38 } }),
     replays = [];
-
-  inputHandler.set(input);
 
   var setup = function (map) {
     var data = map.layers[0].data,
@@ -72,17 +67,16 @@
   };
 
   $(world).on('world.player.killed', function (e, p) {
-    var replayInput;
     if (player === p) { // TODO: or if world isComplete
-      replayInput = replayFactory();
-      replayInput.deserialize(JSON.parse(replayRecording.serialize())); // TODO: use a copy from method? meantime this is a good unit test
-      replays.push(replayInput);
+      replays.push(inputFactory({
+        replay: input.serialize()
+      }));
       setTimeout(function () {
         if (world.isComplete()) {
           replays = [];
           overlay.showTitle();
         }
-        replayRecording.reset();
+        input.reset();
         loadWorld(DEFAULT_LEVEL);
         overlay.fadeFromBlack();
       }, 1000);
