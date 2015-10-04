@@ -13,10 +13,6 @@ module.exports = function () {
 
   var scene = sceneFactory($('#canvas'));
 
-  var timestamp = function () {
-    return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
-  };
-
   var bound = function (x, min, max) {
     return Math.max(min, Math.min(max, x));
   };
@@ -29,12 +25,6 @@ module.exports = function () {
     ((x2 + w2) < x1) ||
     ((y1 + h1) < y2) ||
     ((y2 + h2) < y1));
-  };
-
-  var render = function (dt) {
-    _.each(players, function (p) {
-      p.avatar.position.set(p.x + (p.dx * dt), ty(p.y + (p.dy * dt)), 0);
-    });
   };
 
   var collideTargets = function (entity) {
@@ -100,7 +90,7 @@ module.exports = function () {
     entity.falling = ! (celldown || (nx && celldiag));
   };
 
-  var updatePlayer = function (entity, dt) {
+  var updateEntity = function (entity, dt) {
     var wasleft = entity.dx < 0,
       wasright = entity.dx > 0,
       falling = entity.falling,
@@ -143,38 +133,25 @@ module.exports = function () {
     collideTargets(entity);
   };
 
-  var step = 1 / 60,
-    dt = 0,
-    now,
-    last = timestamp();
-
-  var ticks = 0;
-  var update = function (dt) {
-    $(world).trigger('world.update', ticks);
-    ticks += 1;
-    _.each(players, function (p) {
-      updatePlayer(p, dt);
-    });
-  };
-
-  $(scene).on('scene.render', function () {
-    now = timestamp();
-    dt = dt + Math.min(1, (now - last) / 1000);
-    while(dt > step) {
-      dt = dt - step;
-      update(step);
-    }
-    render(dt);
-    last = now;
-
-    if (players[0]) {
-      scene.follow(players[0].avatar.position);
-    }
-  });
-
   world = {
+    update: function (step) {
+      _.each(players, function (p) {
+        updateEntity(p, step);
+      });
+    },
+
+    render: function (dt) {
+      _.each(players, function (p) {
+        p.avatar.position.set(p.x + (p.dx * dt), ty(p.y + (p.dy * dt)), 0);
+      });
+
+      if (players[0]) {
+        scene.follow(players[0].avatar.position);
+      }
+      scene.render();
+    },
+
     clear: function () {
-      ticks = 0;
       players = [];
       targets = [];
       cells = [];

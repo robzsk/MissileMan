@@ -1,6 +1,6 @@
-'use strict';
-
 module.exports = function (input) {
+  'use strict';
+
   var moves = {};
 
   if (input) {

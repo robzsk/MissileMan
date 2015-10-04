@@ -9,15 +9,19 @@
     replayFactory = require('./scripts/replay'),
     assets = require('./scripts/assets'),
     world = require('./scripts/world'),
-    KEY = require('./scripts/keys');
+    loop = require('./scripts/loop'),
+    inputHandler = require('./scripts/inputHandler');
 
   overlay.fadeFromBlack();
+  overlay.showTitle();
 
   var player,
     spawn, // temporary player spawner
     input = inputFactory(),
     replayRecording = replayFactory(input),
     replays = [];
+
+  inputHandler.set(input);
 
   var setup = function (map) {
     var data = map.layers[0].data,
@@ -63,15 +67,9 @@
         });
       };
     world.clear();
+    loop.reset();
     loadLevel(addReplays);
   };
-
-  $(world).on('world.update', function (e, ticks) {
-    input.update(ticks);
-    _.each(replays, function (r) {
-      r.update(ticks);
-    });
-  });
 
   $(world).on('world.player.killed', function (e, p) {
     var replayInput;
@@ -82,6 +80,7 @@
       setTimeout(function () {
         if (world.isComplete()) {
           replays = [];
+          overlay.showTitle();
         }
         replayRecording.reset();
         loadWorld(DEFAULT_LEVEL);
@@ -90,33 +89,29 @@
     }
   });
 
-  var inputHandler = function () {
-    var onkey = function (ev, key, down) {
-      switch (key) {
-        case KEY.LEFT:
-          input.setLeft(down);
-          ev.preventDefault();
-          return false;
-        case KEY.RIGHT:
-          input.setRight(down);
-          ev.preventDefault();
-          return false;
-        case KEY.UP:
-          input.setJump(down);
-          ev.preventDefault();
-          return false;
-      }
-    };
-
-    document.addEventListener('keydown', function (ev) { return onkey(ev, ev.keyCode, true);  }, false);
-    document.addEventListener('keyup', function (ev) { return onkey(ev, ev.keyCode, false); }, false);
-  }();
+  $(overlay).on('title.playbutton.click', function () {
+    overlay.hideTitle();
+    overlay.fadeFromBlack();
+    loadWorld(DEFAULT_LEVEL);
+  });
 
   $(document).ready(function () {
     assets.load();
     $(assets).on('assets.loaded', function () {
       loadWorld(DEFAULT_LEVEL);
     });
+  });
+
+  $(loop).on('loop.update', function (e, ticks, step) {
+    input.update(ticks);
+    _.each(replays, function (r) {
+      r.update(ticks);
+    });
+    world.update(step);
+  });
+
+  $(loop).on('loop.render', function (e, dt) {
+    world.render(dt);
   });
 
 })();

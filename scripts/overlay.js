@@ -1,4 +1,8 @@
 module.exports = function () {
+  'use strict';
+
+  var overlay;
+
   var fader = function () {
     var f = $('<div/>')
       .css({
@@ -14,10 +18,37 @@ module.exports = function () {
     return f;
   }();
 
-  return {
+  var button = function () {
+    var b = $('<button>')
+      .css({
+        position: 'fixed',
+        bottom: '-100px',
+        left: '50%'
+      })
+      .click(function () {
+        $(overlay).trigger('title.playbutton.click');
+      })
+      .text('Play');
+    $('body').append(b);
+    return b;
+  }();
+
+  overlay = {
     fadeFromBlack: function () {
       fader.css({opacity: 1});
       fader.stop().animate({opacity: 0}, 600);
+    },
+
+    showTitle: function () {
+      button.stop()
+        .animate({bottom: '100px'}, 600, 'easeOutBack');
+    },
+
+    hideTitle: function () {
+      button.stop()
+        .animate({bottom: '-100px'}, 400, 'easeInBack');
     }
+
   };
+  return overlay;
 }();

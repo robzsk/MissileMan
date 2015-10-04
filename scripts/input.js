@@ -1,8 +1,6 @@
-'use strict';
-
 module.exports = function () {
-  var moves = [],
-    lastLeft = false,
+  'use strict';
+  var lastLeft = false,
     lastRight = false,
     lastJump = false,
     left = false,

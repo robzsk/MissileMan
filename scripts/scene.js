@@ -3,20 +3,6 @@ var zoom = 26;
 module.exports = function (canvas) {
   'use strict';
 
-  var stats = function () {
-    var s = {begin: function () {},end: function () {}};
-
-    if (typeof Stats !== 'undefined') {
-      s = new Stats();
-      s.setMode(0);
-      s.domElement.style.position = 'absolute';
-      s.domElement.style.left = '0px';
-      s.domElement.style.top = '0px';
-      $('body').append(s.domElement);
-    }
-    return s;
-  }();
-
   var ret,
     scene = new THREE.Scene(),
     cam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, zoom - 9, zoom),
@@ -35,30 +21,30 @@ module.exports = function (canvas) {
   renderer.setClearColor(0x3e3e3e, 1);
   $('body').append(renderer.domElement);
 
-  +function render () {
-    stats.begin();
-    requestAnimationFrame(render);
-    $(ret).trigger('scene.render');
-    renderer.render(scene, cam);
-    stats.end();
-  }();
-
   ret = {
+    render: function () {
+      renderer.render(scene, cam);
+    },
+
     add: function (m) {
       scene.add(m);
     },
+
     follow: function (p) {
       cam.position.set(p.x, p.y, zoom);
     },
+
     remove: function (m) {
       scene.remove(m);
     },
+
     clear: function () {
       var children = _.clone(scene.children);
       _.each(children, function (child) {
         scene.remove(child);
       });
     }
+
   };
   return ret;
 };
