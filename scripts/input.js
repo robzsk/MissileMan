@@ -2,42 +2,34 @@
 
 var replayInput = function (file) {
   var moves = JSON.parse(file);
-  var input = {
+  return {
     update: function (tick) {
       var m = moves['_' + tick];
       if (m) {
-        $(input).trigger('input.move', m);
+        $(this).trigger('input.move', _.clone(m));
       }
     }
   };
-  return input;
 };
 
 var keyboardInput = function (keys) {
-  var moves = {},
-    lastLeft = false, lastRight = false, lastJump = false, left = false, right = false, jump = false;
+  var current = _.mapObject(keys, function () { return false; }),
+    prev = _.clone(current), moves = {};
 
   var onkey = function (ev, kc, down) {
-    switch (kc) {
-      case keys.left:
-        left = down;
+    _.findKey(keys, function (v, k) {
+      if (v === kc) {
+        current[k] = down;
         ev.preventDefault();
-        return false;
-      case keys.right:
-        right = down;
-        ev.preventDefault();
-        return false;
-      case keys.jump:
-        jump = down;
-        ev.preventDefault();
-        return false;
-    }
+        return true;
+      }
+    });
   };
 
-  document.addEventListener('keydown', function (ev) { return onkey(ev, ev.keyCode, true);  }, false);
-  document.addEventListener('keyup', function (ev) { return onkey(ev, ev.keyCode, false); }, false);
+  $(document).keydown(function (ev) { return onkey(ev, ev.keyCode, true); });
+  $(document).keyup(function (ev) { return onkey(ev, ev.keyCode, false); });
 
-  var input = {
+  return {
     reset: function () {
       moves = {};
     },
@@ -47,18 +39,13 @@ var keyboardInput = function (keys) {
     },
 
     update: function (tick) {
-      var move;
-      if (lastLeft !== left || lastRight !== right || lastJump !== jump) {
-        move = { left: left,right: right,jump: jump,tick: tick };
-        moves['_' + tick] = move;
-        $(input).trigger('input.move', move);
-        lastLeft = left;
-        lastRight = right;
-        lastJump = jump;
+      if (!_.isMatch(current, prev)) {
+        moves['_' + tick] = _.clone(current);
+        $(this).trigger('input.move', _.clone(current));
+        _.extend(prev, current); // copy
       }
     }
   };
-  return input;
 };
 
 module.exports = function (config) {
