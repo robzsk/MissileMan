@@ -6,7 +6,8 @@ module.exports = function () {
 
   var players = [],
     targets = [],
-    cells = [];
+    cells = [],
+    playerToWatch;
 
   var assets = require('./assets'),
     sceneFactory = require('./scene');
@@ -33,8 +34,9 @@ module.exports = function () {
         scene.remove(entity.avatar);
         scene.remove(t.avatar);
         targets = _.without(targets, _.findWhere(targets, t));
-        players = _.without(players, _.findWhere(players, entity));
+        players = _.without(players, _.findWhere(players, entity)); // TODO: check the findwhere is needed
         $(world).trigger('world.player.killed', entity);
+
         return true;
       }
       return false;
@@ -145,8 +147,8 @@ module.exports = function () {
         p.avatar.position.set(p.x + (p.dx * dt), ty(p.y + (p.dy * dt)), 0);
       });
 
-      if (players[0]) {
-        scene.follow(players[0].avatar.position);
+      if (playerToWatch) {
+        scene.follow(playerToWatch.position);
       }
       scene.render();
     },
@@ -166,10 +168,13 @@ module.exports = function () {
       scene.add(cube);
     },
 
-    addPlayer: function (player) {
+    addPlayer: function (player, watch) {
       players.push(player);
       player.avatar = assets.cubePlayer();
       scene.add(player.avatar);
+      if (watch) {
+        playerToWatch = player.avatar;
+      }
     },
 
     addBlocks: function (blocks) {
@@ -190,7 +195,7 @@ module.exports = function () {
     },
 
     isComplete: function () {
-      return targets.length === 0;
+      return targets.length <= 0;
     }
 
   };

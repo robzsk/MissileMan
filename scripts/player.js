@@ -27,6 +27,14 @@ module.exports = function (conf) {
   player.jump = false;
   player.start = { x: obj.x, y: obj.y };
 
+  var handleInput = function (e, m) {
+    player.left = m.left;
+    player.right = m.right;
+    player.jump = m.jump;
+  };
+
+  $(conf.input).on('input.move', handleInput);
+
   player.reset = function () {
     player.jump = player.left = player.right = false;
     player.dx = player.dy = 0;
@@ -34,17 +42,13 @@ module.exports = function (conf) {
     player.y = player.start.y;
   };
 
-  player.setInput = function (i) {
-    $(i).on('input.move', function (e, m) {
-      player.left = m.left;
-      player.right = m.right;
-      player.jump = m.jump;
-    });
+  player.detatchInput = function () {
+    $(conf.input).off('input.move', handleInput);
   };
 
-  if (conf.input) {
-    player.setInput(conf.input);
-  }
+  player.update = function (ticks) {
+    conf.input.update(ticks);
+  };
 
   return player;
 };

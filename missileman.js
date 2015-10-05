@@ -10,28 +10,23 @@
     world = require('./scripts/world'),
     loop = require('./scripts/loop');
 
-  overlay.fadeFromBlack();
-  overlay.showTitle();
-
-  var player,
-    spawn, // temporary player spawner
-    input = inputFactory({ keys: { left: 37, right: 39, jump: 38 } }),
-    replays = [];
+  var players = [],
+    spawnPoints = [],
+    currentPlayer = 0,
+    playerInput = inputFactory({ keys: { left: 37, right: 39, jump: 38 } }),
+    overlayInput = inputFactory({ keys: { up: 38, down: 40, select: 13 } });
 
   var setup = function (map) {
     var data = map.layers[0].data,
       objects = map.layers[1].objects,
       n, obj;
 
+    spawnPoints = [];
+
     for (n = 0; n < objects.length; n++) {
       obj = objects[n];
       if (obj.type === 'player') {
-        spawn = obj; // temporary
-        player = playerFactory({
-          input: input,
-          obj: obj
-        });
-        world.addPlayer(player);
+        spawnPoints.push(obj);
       } else if (obj.type === 'target') {
         world.addTarget({
           x: obj.x, y: obj.y
@@ -44,62 +39,93 @@
 
   var loadWorld = function (levelFile) {
     var loadLevel = function (callback) {
-        $.get(levelFile, function (req) {
-          if (req.layers) {
-            setup(req); // from a webserver the response is parsed already
-          } else {
-            setup(JSON.parse(req));
-          }
-          callback();
+      $.get(levelFile, function (req) {
+        if (req.layers) {
+          setup(req); // from a webserver the response is parsed already
+        } else {
+          setup(JSON.parse(req));
+        }
+        callback();
+      });
+    };
+    var addPlayers = function () {
+      if (players.length === 0) {
+        players[currentPlayer] = playerFactory({
+          input: playerInput,
+          obj: spawnPoints[currentPlayer]
         });
-      },
-      addReplays = function () {
-        _.each(replays, function (r) {
-          world.addPlayer(playerFactory({
-            input: r,
-            obj: spawn
-          }));
-        });
-      };
+      }
+      playerInput.reset();
+      _.each(players, function (p) {
+        p.reset();
+        world.addPlayer(p, p === players[currentPlayer]);
+      });
+
+    };
     world.clear();
     loop.reset();
-    loadLevel(addReplays);
+    loadLevel(addPlayers);
   };
 
   $(world).on('world.player.killed', function (e, p) {
-    if (player === p) { // TODO: or if world isComplete
-      replays.push(inputFactory({
-        replay: input.serialize()
-      }));
+    if (players[currentPlayer] === p) {
+      players[currentPlayer].detatchInput();
+      players[currentPlayer] = playerFactory({
+        input: inputFactory({replay: playerInput.serialize()}),
+        obj: spawnPoints[currentPlayer]
+      });
+
+      currentPlayer += 1;
+      if (currentPlayer >= spawnPoints.length) {
+        currentPlayer = 0;
+      }
+
+      // move to the next spawn point
+      if (players[currentPlayer]) {
+        players[currentPlayer].detatchInput();
+      }
+      players[currentPlayer] = playerFactory({
+        input: playerInput,
+        obj: spawnPoints[currentPlayer]
+      });
+
       setTimeout(function () {
         if (world.isComplete()) {
-          replays = [];
-          overlay.showTitle();
+          overlay.showTitle(overlayInput);
+        } else {
+          overlay.fadeFromBlack();
+          loadWorld(DEFAULT_LEVEL);
         }
-        input.reset();
-        loadWorld(DEFAULT_LEVEL);
-        overlay.fadeFromBlack();
       }, 1000);
+
     }
   });
 
   $(overlay).on('title.playbutton.click', function () {
     overlay.hideTitle();
     overlay.fadeFromBlack();
+
+    _.each(players, function (p) {
+      p.detatchInput();
+    });
+    players = [];
+    currentPlayer = 0;
     loadWorld(DEFAULT_LEVEL);
+
   });
 
   $(document).ready(function () {
     assets.load();
     $(assets).on('assets.loaded', function () {
-      loadWorld(DEFAULT_LEVEL);
+      overlay.fadeFromBlack();
+      overlay.showTitle(overlayInput);
     });
   });
 
   $(loop).on('loop.update', function (e, ticks, step) {
-    input.update(ticks);
-    _.each(replays, function (r) {
-      r.update(ticks);
+    overlayInput.update(ticks);
+    _.each(players, function (p) {
+      p.update(ticks);
     });
     world.update(step);
   });
