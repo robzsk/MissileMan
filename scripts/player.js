@@ -10,22 +10,22 @@ var METER = 1,
 
 module.exports = function (conf) {
   var obj = conf.obj;
-  var player = {};
-  player.x = obj.x;
-  player.y = obj.y;
-  player.dx = 0;
-  player.dy = 0;
-  player.gravity = METER * (obj.properties.gravity || GRAVITY);
-  player.maxdx = METER * (obj.properties.maxdx || MAXDX);
-  player.maxdy = METER * (obj.properties.maxdy || MAXDY);
-  player.impulse = METER * (obj.properties.impulse || IMPULSE);
-  player.accel = player.maxdx / (obj.properties.accel || ACCEL);
-  player.friction = player.maxdx / (obj.properties.friction || FRICTION);
-  player.player = obj.type == 'player';
-  player.left = obj.properties.left;
-  player.right = obj.properties.right;
-  player.jump = false;
-  player.start = { x: obj.x, y: obj.y };
+  var player = {
+    x: obj.x,
+    y: obj.y,
+    dx: 0,
+    dy: 0,
+    gravity: GRAVITY,
+    maxdx: MAXDX,
+    maxdy: MAXDY,
+    impulse: IMPULSE,
+    accel: MAXDX / ACCEL,
+    friction: MAXDX / FRICTION,
+    left: false,
+    right: false,
+    jump: false,
+    start: { x: obj.x, y: obj.y },
+  };
 
   var handleInput = function (e, m) {
     player.left = m.left;

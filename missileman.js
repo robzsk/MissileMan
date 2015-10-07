@@ -17,30 +17,18 @@
     overlayInput = inputFactory({ keys: { up: 38, down: 40, select: 13 } });
 
   var setup = function (map) {
-    var data = map.layers[0].data,
-      objects = map.layers[1].objects,
-      n, obj;
+    spawnPoints = map.spawnPoints;
+    _.each(map.targets, function (t) {
+      world.addTarget(t);
+    });
 
-    spawnPoints = [];
-
-    for (n = 0; n < objects.length; n++) {
-      obj = objects[n];
-      if (obj.type === 'player') {
-        spawnPoints.push(obj);
-      } else if (obj.type === 'target') {
-        world.addTarget({
-          x: obj.x, y: obj.y
-        });
-      }
-    }
-
-    world.addBlocks(data);
+    world.addBlocks(map.cells);
   };
 
   var loadWorld = function (levelFile) {
     var loadLevel = function (callback) {
       $.get(levelFile, function (req) {
-        if (req.layers) {
+        if (req.cells) {
           setup(req); // from a webserver the response is parsed already
         } else {
           setup(JSON.parse(req));
