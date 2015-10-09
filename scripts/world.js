@@ -14,10 +14,6 @@ module.exports = function () {
 
   var scene = sceneFactory($('#canvas'));
 
-  var bound = function (x, min, max) {
-    return Math.max(min, Math.min(max, x));
-  };
-
   var tcell = function (tx, ty) { return cells[tx + (ty * MAP.tw)];};
   var ty = function (y) { return MAP.th - y;}; // little hack to show y position in 3d space instead of canvas space
 
@@ -92,53 +88,12 @@ module.exports = function () {
     entity.falling = ! (celldown || (nx && celldiag));
   };
 
-  var updateEntity = function (entity, dt) {
-    var wasleft = entity.dx < 0,
-      wasright = entity.dx > 0,
-      falling = entity.falling,
-      friction = entity.friction * (falling ? 0.5 : 1),
-      accel = entity.accel * (falling ? 0.5 : 1);
-
-    entity.ddx = 0;
-    entity.ddy = entity.gravity;
-
-    if (entity.left) {
-      entity.ddx = entity.ddx - accel;
-    }
-    else if (wasleft) {
-      entity.ddx = entity.ddx + friction;
-    }
-
-    if (entity.right) {
-      entity.ddx = entity.ddx + accel;
-    }
-    else if (wasright) {
-      entity.ddx = entity.ddx - friction;
-    }
-
-    if (entity.jump && !entity.jumping && !falling) {
-      entity.ddy = entity.ddy - entity.impulse; // an instant big force impulse
-      entity.jumping = true;
-    }
-
-    entity.x = entity.x + (dt * entity.dx);
-    entity.y = entity.y + (dt * entity.dy);
-    entity.dx = bound(entity.dx + (dt * entity.ddx), -entity.maxdx, entity.maxdx);
-    entity.dy = bound(entity.dy + (dt * entity.ddy), -entity.maxdy, entity.maxdy);
-
-    if ((wasleft && (entity.dx > 0)) ||
-      (wasright && (entity.dx < 0))) {
-      entity.dx = 0; // clamp at zero to prevent friction from making us jiggle side to side
-    }
-
-    collideCells(entity);
-    collideTargets(entity);
-  };
-
   world = {
-    update: function (step) {
+    update: function (ticks, step) {
       _.each(players, function (p) {
-        updateEntity(p, step);
+        p.update(ticks, step);
+        collideCells(p);
+        collideTargets(p);
       });
     },
 

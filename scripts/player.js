@@ -46,8 +46,52 @@ module.exports = function (conf) {
     $(conf.input).off('input.move', handleInput);
   };
 
-  player.update = function (ticks) {
+  var bound = function (x, min, max) {
+    return Math.max(min, Math.min(max, x));
+  };
+  var updatePhysics = function (dt) {
+    var wasleft = player.dx < 0,
+      wasright = player.dx > 0,
+      falling = player.falling,
+      friction = player.friction * (falling ? 0.5 : 1),
+      accel = player.accel * (falling ? 0.5 : 1);
+
+    player.ddx = 0;
+    player.ddy = player.gravity;
+
+    if (player.left) {
+      player.ddx = player.ddx - accel;
+    }
+    else if (wasleft) {
+      player.ddx = player.ddx + friction;
+    }
+
+    if (player.right) {
+      player.ddx = player.ddx + accel;
+    }
+    else if (wasright) {
+      player.ddx = player.ddx - friction;
+    }
+
+    if (player.jump && !player.jumping && !falling) {
+      player.ddy = player.ddy - player.impulse; // an instant big force impulse
+      player.jumping = true;
+    }
+
+    player.x = player.x + (dt * player.dx);
+    player.y = player.y + (dt * player.dy);
+    player.dx = bound(player.dx + (dt * player.ddx), -player.maxdx, player.maxdx);
+    player.dy = bound(player.dy + (dt * player.ddy), -player.maxdy, player.maxdy);
+
+    if ((wasleft && (player.dx > 0)) ||
+      (wasright && (player.dx < 0))) {
+      player.dx = 0; // clamp at zero to prevent friction from making us jiggle side to side
+    }
+  };
+
+  player.update = function (ticks, dt) {
     conf.input.update(ticks);
+    updatePhysics(dt);
   };
 
   return player;

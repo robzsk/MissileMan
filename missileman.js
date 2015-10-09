@@ -112,10 +112,7 @@
 
   $(loop).on('loop.update', function (e, ticks, step) {
     overlayInput.update(ticks);
-    _.each(players, function (p) {
-      p.update(ticks);
-    });
-    world.update(step);
+    world.update(ticks, step);
   });
 
   $(loop).on('loop.render', function (e, dt) {
