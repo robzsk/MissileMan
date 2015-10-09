@@ -6,7 +6,7 @@ module.exports = function () {
 
   var players = [],
     targets = [],
-    cells = [],
+    cells = {},
     playerToWatch;
 
   var assets = require('./assets'),
@@ -15,7 +15,6 @@ module.exports = function () {
   var scene = sceneFactory($('#canvas'));
 
   var tcell = function (tx, ty) { return cells[tx + (ty * MAP.tw)];};
-  var ty = function (y) { return MAP.th - y;}; // little hack to show y position in 3d space instead of canvas space
 
   var overlap = function (x1, y1, w1, h1, x2, y2, w2, h2) {
     return !(((x1 + w1) < x2) ||
@@ -42,14 +41,14 @@ module.exports = function () {
   var collideCells = function (entity) {
     var tx = Math.floor(entity.x),
       ty = Math.floor(entity.y),
-      nx = entity.x % TILE,
-      ny = entity.y % TILE,
+      nx = entity.x % 1,
+      ny = entity.y % 1,
       cell = tcell(tx, ty),
       cellright = tcell(tx + 1, ty),
-      celldown = tcell(tx, ty + 1),
-      celldiag = tcell(tx + 1, ty + 1);
+      celldown = tcell(tx, ty - 1),
+      celldiag = tcell(tx + 1, ty - 1);
 
-    if (entity.dy > 0) {
+    if (entity.dy < 0) {
       if ((celldown && !cell) ||
         (celldiag && !cellright && nx)) {
         entity.y = ty;
@@ -59,10 +58,10 @@ module.exports = function () {
         ny = 0;
       }
     }
-    else if (entity.dy < 0) {
+    else if (entity.dy > 0) {
       if ((cell && !celldown) ||
         (cellright && !celldiag && nx)) {
-        entity.y = ty + 1;
+        entity.y = ty;
         entity.dy = 0;
         cell = celldown;
         cellright = celldiag;
@@ -85,7 +84,7 @@ module.exports = function () {
       }
     }
 
-    entity.falling = ! (celldown || (nx && celldiag));
+    entity.falling = !(celldown || (nx && celldiag));
   };
 
   world = {
@@ -99,7 +98,7 @@ module.exports = function () {
 
     render: function (dt) {
       _.each(players, function (p) {
-        p.avatar.position.set(p.x + (p.dx * dt), ty(p.y + (p.dy * dt)), 0);
+        p.avatar.position.set(p.x + (p.dx * dt), p.y + (p.dy * dt), 0);
       });
 
       if (playerToWatch) {
@@ -119,7 +118,7 @@ module.exports = function () {
       var cube = assets.cubeTarget();
       targets.push(target);
       target.avatar = cube;
-      cube.position.set(target.x, ty(target.y), 0);
+      cube.position.set(target.x, target.y, 0);
       scene.add(cube);
     },
 
@@ -135,7 +134,7 @@ module.exports = function () {
     addBlocks: function (blocks) {
       cells = blocks;
       var x, y, cell, cube;
-      for (y = 0; y < MAP.th; y++) {
+      for (y = MAP.th - 1; y >= 0; y--) {
         for (x = 0; x < MAP.tw; x++) {
           cell = tcell(x, y);
           if (cell === 1) {
@@ -143,7 +142,7 @@ module.exports = function () {
           } else {
             cube = assets.cubeEmpty();
           }
-          cube.position.set(x, ty(y), 0);
+          cube.position.set(x, y, 0);
           scene.add(cube);
         }
       }
