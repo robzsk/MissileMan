@@ -3,12 +3,12 @@
 
   var DEFAULT_LEVEL = 'level.json';
 
-  var overlay = require('./scripts/overlay'),
-    inputFactory = require('./scripts/input'),
-    playerFactory = require('./scripts/player'),
-    assets = require('./scripts/assets'),
-    world = require('./scripts/world'),
-    loop = require('./scripts/loop');
+  var overlay = require('./src/overlay'),
+    inputFactory = require('./src/input'),
+    playerFactory = require('./src/player'),
+    assets = require('./src/assets'),
+    world = require('./src/world'),
+    loop = require('./src/loop');
 
   var players = [],
     spawnPoints = [],

@@ -13,7 +13,7 @@ gulp.task('serve', function () {
 
   gulp.watch('index.js', electron.restart);
 
-  gulp.watch(['index.html', '*.js', 'scripts/*.js'], electron.reload);
+  gulp.watch(['index.html', '*.js', 'src/*.js'], electron.reload);
 });
 
 gulp.task('reload:browser', function () {
