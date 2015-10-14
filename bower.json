@@ -9,9 +9,7 @@
     "**/.*",
     "node_modules",
     "bower_components",
-    "scripts/vendor/",
-    "test",
-    "tests"
+    "src/vendor/"
   ],
   "dependencies": {
     "jquery": "~2.1.4",

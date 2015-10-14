@@ -1,16 +1,16 @@
 {
-    "uvs": [[0.9999,0.9999,0.0001,0.9999,0.0001,0.0001,0.9999,0.0001]],
-    "vertices": [0.5,-0.5,0,-0.5,-0.5,-0,0.5,0.5,0,-0.5,0.5,0],
     "metadata": {
-        "uvs": 1,
-        "type": "Geometry",
-        "vertices": 4,
-        "generator": "io_three",
-        "faces": 1,
         "version": 3,
+        "generator": "io_three",
+        "vertices": 4,
+        "uvs": 0,
+        "faces": 1,
+        "type": "Geometry",
         "normals": 2
     },
-    "name": "CubeGeometry",
-    "faces": [41,1,0,2,3,2,3,0,1,0,1,1,1],
+    "vertices": [1,0,0,0,0,-0,1,1,0,0,1,-0],
+    "uvs": [],
+    "name": "CubeGeometry.4",
+    "faces": [33,1,0,2,3,0,1,1,1],
     "normals": [0,0,0.999969,0,0,1]
 }

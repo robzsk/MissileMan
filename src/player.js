@@ -1,97 +1,73 @@
-'use strict';
+var MISSILE_MAX_SPEED = 0.5,
+  MISSILE_TORQUE = 0.8,
+  MISSILE_TORQUE_DAMPING = 0.4,
+  MISSILE_TRUST = new THREE.Vector3(0, 5.0, 0);
 
-var METER = 1,
-  GRAVITY = -9.8 * 6, // default (exagerated) gravity
-  MAXDX = 15, // default max horizontal speed (15 tiles per second)
-  MAXDY = 60, // default max vertical speed   (60 tiles per second)
-  ACCEL = 1 / 2, // default take 1/2 second to reach maxdx (horizontal acceleration)
-  FRICTION = 1 / 6, // default take 1/6 second to stop from maxdx (horizontal friction)
-  IMPULSE = 1500;
+var points = [
+  { x: 0, y: 0.175, r: 0.25 },
+  { x: 0, y: -0.175, r: 0.25 }
+];
 
 module.exports = function (conf) {
-  var obj = conf.obj;
-  var player = {
-    x: obj.x,
-    y: obj.y,
-    dx: 0,
-    dy: 0,
-    gravity: GRAVITY,
-    maxdx: MAXDX,
-    maxdy: MAXDY,
-    impulse: IMPULSE,
-    accel: MAXDX / ACCEL,
-    friction: MAXDX / FRICTION,
-    left: false,
-    right: false,
-    jump: false,
-    start: { x: obj.x, y: obj.y },
+  'use strict';
+
+  var entity = require('./physics/entity')(),
+    thrust = require('./physics/thrust');
+
+  var left = false, right = false, jump = false;
+
+  entity.forces = function (state, force, torque) {
+    var sa = state.angularVelocity;
+
+    thrust(force, state.orientation, MISSILE_TRUST);
+
+    // damping
+    torque.x -= sa.x * MISSILE_TORQUE_DAMPING;
+    torque.y -= sa.y * MISSILE_TORQUE_DAMPING;
+    torque.z -= sa.z * MISSILE_TORQUE_DAMPING;
+  };
+
+  entity.control = function (state, force, torque) {
+    if (left) {
+      torque.z += MISSILE_TORQUE;
+    }
+    if (right) {
+      torque.z -= MISSILE_TORQUE;
+    }
+  };
+
+  entity.limitMomentum = function (state) {
+    var sm = state.momentum;
+    if (sm.length() > MISSILE_MAX_SPEED) {
+      sm.normalize();
+      sm.multiplyScalar(MISSILE_MAX_SPEED);
+    }
   };
 
   var handleInput = function (e, m) {
-    player.left = m.left;
-    player.right = m.right;
-    player.jump = m.jump;
+    left = m.left;
+    right = m.right;
+    jump = m.jump;
   };
 
   $(conf.input).on('input.move', handleInput);
 
-  player.reset = function () {
-    player.jump = player.left = player.right = false;
-    player.dx = player.dy = 0;
-    player.x = player.start.x;
-    player.y = player.start.y;
-  };
+  return {
+    get x() { return entity.x; },
+    get y() { return entity.y; },
+    get orientation() { return entity.orientation; },
+    detatchInput: function () {
+      $(conf.input).off('input.move', handleInput);
+    },
 
-  player.detatchInput = function () {
-    $(conf.input).off('input.move', handleInput);
-  };
+    reset: function () {
+      jump = left = right = false;
+      entity.setPosition(conf.pos.x, conf.pos.y);
+    },
 
-  var bound = function (x, min, max) {
-    return Math.max(min, Math.min(max, x));
-  };
-  var updatePhysics = function (dt) {
-    var wasleft = player.dx < 0,
-      wasright = player.dx > 0,
-      falling = player.falling,
-      friction = player.friction * (falling ? 0.5 : 1),
-      accel = player.accel * (falling ? 0.5 : 1);
-    player.ddx = 0;
-    player.ddy = player.gravity;
-
-    if (player.left) {
-      player.ddx = player.ddx - accel;
-    }
-    else if (wasleft) {
-      player.ddx = player.ddx + friction;
-    }
-
-    if (player.right) {
-      player.ddx = player.ddx + accel;
-    }
-    else if (wasright) {
-      player.ddx = player.ddx - friction;
-    }
-
-    if (player.jump && !player.jumping && !falling) {
-      player.ddy = player.ddy + player.impulse;
-      player.jumping = true;
-    }
-
-    player.x = player.x + (dt * player.dx);
-    player.y = player.y + (dt * player.dy);
-    player.dx = bound(player.dx + (dt * player.ddx), -player.maxdx, player.maxdx);
-    player.dy = bound(player.dy + (dt * player.ddy), -player.maxdy, player.maxdy);
-
-    if ((wasleft && (player.dx > 0)) ||
-      (wasright && (player.dx < 0))) {
-      player.dx = 0; // clamp at zero to prevent friction from making us jiggle side to side
+    update: function (ticks, dt, lines) {
+      conf.input.update(ticks);
+      entity.update(dt, points, lines);
     }
   };
-
-  player.update = function (ticks, dt) {
-    conf.input.update(ticks);
-    updatePhysics(dt);
-  };
-
-  return player;
 };

@@ -14,9 +14,10 @@ module.exports = function () {
     load: function () {
       var manager = new THREE.LoadingManager(),
         loader = new THREE.JSONLoader(manager);
-      var loadMesh = function (name, mf) {
+      var loadMesh = function (name, mf, color) {
         loader.load('assets/' + mf + '.json', function (geom) {
-          mesh[name] = new THREE.Mesh(geom, new THREE.MeshDepthMaterial());
+          mesh[name] = new THREE.Mesh(geom, color === undefined ?
+            new THREE.MeshDepthMaterial() : new THREE.MeshBasicMaterial({ color: color }));
         });
       };
       var me = this;
@@ -26,6 +27,7 @@ module.exports = function () {
 
       loadMesh('empty', 'empty');
       loadMesh('solid', 'solid');
+      loadMesh('player', 'player', 0x0179d5);
     },
 
     // TODO: rename these or group them...
@@ -42,7 +44,7 @@ module.exports = function () {
     },
 
     cubePlayer: function () {
-      return createCube(0x0179d5);
+      return mesh['player'].clone();
     }
 
   };

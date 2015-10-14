@@ -40,7 +40,7 @@
       if (players.length === 0) {
         players[currentPlayer] = playerFactory({
           input: playerInput,
-          obj: spawnPoints[currentPlayer]
+          pos: spawnPoints[currentPlayer]
         });
       }
       playerInput.reset();

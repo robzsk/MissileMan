@@ -1,8 +1,14 @@
 module.exports = function () {
   'use strict';
+
+  // TODO: line.js needs refactor
+  var line = require('./physics/line');
+
   var world;
   var MAP = { tw: 64, th: 48 },
     TILE = 1;
+
+  var tcell = function (tx, ty) { return cells[tx + (ty * MAP.tw)];};
 
   var players = [],
     targets = [],
@@ -14,91 +20,66 @@ module.exports = function () {
 
   var scene = sceneFactory($('#canvas'));
 
-  var tcell = function (tx, ty) { return cells[tx + (ty * MAP.tw)];};
-
-  var overlap = function (x1, y1, w1, h1, x2, y2, w2, h2) {
-    return !(((x1 + w1) < x2) ||
-    ((x2 + w2) < x1) ||
-    ((y1 + h1) < y2) ||
-    ((y2 + h2) < y1));
-  };
-
-  var collideTargets = function (entity) {
-    _.find(targets, function (t) {
-      if (overlap(entity.x, entity.y, 1, 1, t.x, t.y, 1, 1)) {
-        scene.remove(entity.avatar);
-        scene.remove(t.avatar);
-        targets = _.without(targets, _.findWhere(targets, t));
-        players = _.without(players, _.findWhere(players, entity)); // TODO: check the findwhere is needed
-        $(world).trigger('world.player.killed', entity);
-
-        return true;
-      }
-      return false;
-    });
-  };
-
-  var collideCells = function (entity) {
-    var tx = Math.floor(entity.x),
-      ty = Math.floor(entity.y),
-      nx = entity.x % 1,
-      ny = entity.y % 1,
-      cell = tcell(tx, ty),
-      cellright = tcell(tx + 1, ty),
-      celldown = tcell(tx, ty - 1),
-      celldiag = tcell(tx + 1, ty - 1);
-
-    if (entity.dy < 0) {
-      if ((celldown && !cell) ||
-        (celldiag && !cellright && nx)) {
-        entity.y = ty;
-        entity.dy = 0;
-        entity.falling = false;
-        entity.jumping = false;
-        ny = 0;
-      }
-    }
-    else if (entity.dy > 0) {
-      if ((cell && !celldown) ||
-        (cellright && !celldiag && nx)) {
-        entity.y = ty;
-        entity.dy = 0;
-        cell = celldown;
-        cellright = celldiag;
-        ny = 0;
-      }
-    }
-
-    if (entity.dx > 0) {
-      if ((cellright && !cell) ||
-        (celldiag && !celldown && ny)) {
-        entity.x = tx;
-        entity.dx = 0;
-      }
-    }
-    else if (entity.dx < 0) {
-      if ((cell && !cellright) ||
-        (celldown && !celldiag && ny)) {
-        entity.x = tx + 1;
-        entity.dx = 0;
-      }
-    }
-
-    entity.falling = !(celldown || (nx && celldiag));
-  };
-
-  world = {
+  return {
     update: function (ticks, step) {
       _.each(players, function (p) {
-        p.update(ticks, step);
-        collideCells(p);
-        collideTargets(p);
+        // TODO: refactor this
+        var sx = Math.floor(p.x),
+          sy = Math.floor(p.y);
+        var mask = 0;
+        mask += tcell(sx - 1, sy - 1) ? 4 : 0;
+        mask += tcell(sx, sy - 1) ? 2 : 0;
+        mask += tcell(sx - 1, sy - 1) ? 1 : 0;
+        var lines = line.makeLines(mask, 'bottom');
+        var linesToSend = [];
+        // _.each(lines, function (l) {
+        //   linesToSend.push(line.createLine(
+        //   {a: [sx - 1 + l.a[0], sy - 1 + l.a[1]],
+        //   b: [sx - 1 + l.b[0], sy - 1 + l.b[1]]}
+        //   ));
+        // });
+
+        linesToSend.push(line.createLine(
+          {a: [1, 1], b: [4, 1]}
+        ));
+
+        p.update(ticks, step, linesToSend);
+        // --end refactor this
+
       });
     },
 
     render: function (dt) {
       _.each(players, function (p) {
-        p.avatar.position.set(p.x + (p.dx * dt), p.y + (p.dy * dt), 0);
+        // p.avatar.position.set(p.x, p.y, 0);
+
+        // TODO: move this
+        var rfAngle, rkAxis = {};
+        var q = p.orientation;
+        var fSqrLength = q.x * q.x + q.y * q.y + q.z * q.z;
+        if ( fSqrLength > 0.0) {
+          rfAngle = 2.0 * Math.acos(q.w);
+          var fInvLength = 1.0 / Math.sqrt(fSqrLength);
+          rkAxis.x = p.x * fInvLength;
+          rkAxis.y = p.y * fInvLength;
+          rkAxis.z = p.z * fInvLength;
+        } else {
+          rfAngle = 0.0;
+          rkAxis.x = 1.0;
+          rkAxis.y = 0.0;
+          rkAxis.z = 0.0;
+        }
+
+        // p.avatar.setRotationFromQuaternion(p.orientation);
+        var qq = new THREE.Quaternion();
+        qq.setFromAxisAngle(rkAxis, rfAngle);
+        // p.avatar.setRotationFromQuaternion(qq);
+
+        p.avatar.setRotationFromQuaternion(p.orientation);
+        p.avatar.position.set(p.x, p.y, 0);
+        p.avatar.matrixAutoUpdate = false;
+        p.avatar.updateMatrix();
+
       });
 
       if (playerToWatch) {
@@ -153,5 +134,4 @@ module.exports = function () {
     }
 
   };
-  return world;
 }();

@@ -1,10 +1,9 @@
 'use strict';
+var app = require('app'),
+  BrowserWindow = require('browser-window'),
+  client = require('electron-connect').client;
 
-var app = require('app');
-var BrowserWindow = require('browser-window');
-var client = require('electron-connect').client;
-
-app.on('ready', function () {
+app.on('ready', function (n) {
   var mainWindow = new BrowserWindow({
     // frame: false,
     // toolbar: false,

@@ -28,6 +28,7 @@ module.exports = function () {
     ticks = 0;
 
   +function run () {
+    requestAnimationFrame(run);
     stats.begin();
     now = timestamp();
     dt = dt + Math.min(1, (now - last) / 1000);
@@ -38,7 +39,6 @@ module.exports = function () {
     }
     $(loop).trigger('loop.render', dt);
     last = now;
-    requestAnimationFrame(run);
     stats.end();
   }();
 
