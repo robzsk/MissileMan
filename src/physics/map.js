@@ -18,11 +18,32 @@ module.exports = function () {
       // TODO: refactor this
       var sx = Math.floor(entity.x),
         sy = Math.floor(entity.y);
+
+      var lines = [];
       var mask = 0;
       mask += tcell(sx - 1, sy - 1) ? 4 : 0;
       mask += tcell(sx, sy - 1) ? 2 : 0;
       mask += tcell(sx + 1, sy - 1) ? 1 : 0;
-      var lines = line.makeLines(mask, 'bottom');
+      lines = lines.concat(line.makeLines(mask, 'bottom'));
+
+      mask = 0;
+      mask += tcell(sx - 1, sy + 1) ? 4 : 0;
+      mask += tcell(sx, sy + 1) ? 2 : 0;
+      mask += tcell(sx + 1, sy + 1) ? 1 : 0;
+      lines = lines.concat(line.makeLines(mask, 'top'));
+
+      mask = 0;
+      mask += tcell(sx - 1, sy - 1) ? 4 : 0;
+      mask += tcell(sx - 1, sy) ? 2 : 0;
+      mask += tcell(sx - 1, sy + 1) ? 1 : 0;
+      lines = lines.concat(line.makeLines(mask, 'left'));
+
+      mask = 0;
+      mask += tcell(sx + 1, sy - 1) ? 4 : 0;
+      mask += tcell(sx + 1, sy) ? 2 : 0;
+      mask += tcell(sx + 1, sy + 1) ? 1 : 0;
+      lines = lines.concat(line.makeLines(mask, 'right'));
+
       var linesToSend = [];
       _.each(lines, function (l) {
         linesToSend.push(line.createLine(
