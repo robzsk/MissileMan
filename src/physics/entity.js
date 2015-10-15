@@ -1,17 +1,17 @@
 // adapted from
 // http://gafferongames.com
 
-var plane = require('./plane');
+var collision = require('./collision');
 
 var stateFactory = function () {
   return {
-    position: new THREE.Vector3(0, 0, 0),
-    momentum: new THREE.Vector3(0, 0, 0),
-    orientation: new THREE.Quaternion(0, 0, 0, 1),
-    angularMomentum: new THREE.Vector3(0, 0, 0),
-    velocity: new THREE.Vector3(0, 0, 0),
-    angularVelocity: new THREE.Vector3(0, 0, 0),
-    spin: new THREE.Quaternion(0, 0, 0, 1),
+    position: new THREE.Vector3(),
+    momentum: new THREE.Vector3(),
+    orientation: new THREE.Quaternion(),
+    angularMomentum: new THREE.Vector3(),
+    velocity: new THREE.Vector3(),
+    angularVelocity: new THREE.Vector3(),
+    spin: new THREE.Quaternion(),
     bodyToWorld: new THREE.Matrix4(),
     inertiaTensor: 1.0 / 6.0,
     inverseInertiaTensor: 1.0 / (1.0 / 6.0)
@@ -20,44 +20,11 @@ var stateFactory = function () {
 
 var derivativeFactory = function () {
   return {
-    velocity: new THREE.Vector3(0, 0, 0),
-    force: new THREE.Vector3(0, 0, 0),
-    spin: new THREE.Quaternion(0, 0, 0, 1),
-    torque: new THREE.Vector3(0, 0, 0)
+    velocity: new THREE.Vector3(),
+    force: new THREE.Vector3(),
+    spin: new THREE.Quaternion(),
+    torque: new THREE.Vector3()
   };
-};
-
-var diff = new THREE.Vector3();
-var collisionForPointVsLine = function (state, force, torque, point, line) {
-  var nearestPt = line.nearestPoint(point);
-  diff.set(point.x - nearestPt.x, point.y - nearestPt.y, 0);
-  if (diff.length() < point.r) {
-    var n = diff.clone().normalize(),
-      ptt = n.clone().multiplyScalar(point.r),
-      planeNormal = n.clone(),
-      pointOnPlane = nearestPt,
-      np = new THREE.Vector3();
-    np.set(point.x, point.y, 0);
-    np.sub(ptt);
-    collisionForPointVsPlane(state, force, torque, np, line, plane(planeNormal, pointOnPlane));
-  }
-};
-var collisionForPointVsPlane = function (state, force, torque, point, line, plane) {
-  var c = 100,
-    k = 1000;
-
-  var penetration = plane.constant - point.dot(plane.normal);
-  if (penetration > 0) {
-    var velocity = state.angularVelocity.clone();
-    var sub = new THREE.Vector3();
-    sub.set(point.x, point.y, 0).sub(state.position);
-    velocity.cross(sub).add(state.momentum);
-
-    var relativeSpeed = -plane.normal.dot(velocity);
-    var penaltyForce = plane.normal.clone().multiplyScalar(penetration * k);
-    force.add(penaltyForce);
-    torque.add(new THREE.Vector3().subVectors(point, state.position).cross(penaltyForce));
-  }
 };
 
 module.exports = function () {
@@ -97,25 +64,27 @@ module.exports = function () {
     v.w += ts * dt * (a.w + 2.0 * (b.w + c.w) + d.w);
   };
 
-  var pointToWorld = new THREE.Vector3();
-  var collisions = function (state, force, torque, points, lines) {
-    _.each(lines, function (l) {
-      _.each(points, function (p) {
-        pointToWorld.set(p.x, p.y, 0);
-        pointToWorld.transformDirection(current.bodyToWorld);
-        pointToWorld.multiply(p);
-        pointToWorld.add(current.position);
-        pointToWorld.r = p.r;
-        collisionForPointVsLine(state, force, torque, pointToWorld, l);
+  var handleCollisions = function () {
+    var pointToWorld = new THREE.Vector3();
+    return function (state, force, torque, points, lines) {
+      _.each(lines, function (l) {
+        _.each(points, function (p) {
+          pointToWorld.copy(p)
+            .transformDirection(current.bodyToWorld)
+            .multiply(p)
+            .add(current.position);
+          pointToWorld.r = p.r;
+          collision.vsLine(state, force, torque, pointToWorld, l);
+        });
       });
-    });
-  };
+    };
+  }();
 
   var forces = function (state, force, torque, points, lines) {
     force.set(0.0, 0.0, 0.0);
     torque.set(0.0, 0.0, 0.0);
     entity.forces(state, force, torque);
-    collisions(state, force, torque, points, lines);
+    handleCollisions(state, force, torque, points, lines);
     entity.control(state, force, torque);
   };
 
@@ -164,7 +133,12 @@ module.exports = function () {
     setPosition: function (x, y) { current.position.set(x, y, 0); },
     get x() { return current.position.x; },
     get y() { return current.position.y; },
-    get orientation() { return current.orientation.clone(); }
+    orientation: function () {
+      var q = new THREE.Quaternion();
+      return function () {
+        return q.copy(current.orientation);
+      };
+    }()
 
   };
 

@@ -18,13 +18,13 @@ lines.push([
 // bottom
 lines.push([
   [], // 000
-  [ { a: [2, 1], b: [3, 1] } ], // 001
-  [ { a: [1, 1], b: [2, 1] } ], // 010
-  [ { a: [1, 1], b: [3, 1] } ], // 011
-  [ { a: [0, 1], b: [1, 1] } ], // 100
-  [ { a: [0, 1], b: [1, 1] }, { a: [2, 1], b: [3, 1] } ], // 101
-  [ { a: [0, 1], b: [2, 1] } ], // 110
-  [ { a: [0, 1], b: [3, 1] } ] // 111
+  [ { a: [1, 0], b: [2, 0] } ], // 001
+  [ { a: [0, 0], b: [1, 0] } ], // 010
+  [ { a: [0, 0], b: [2, 0] } ], // 011
+  [ { a: [-1, 0], b: [0, 0] } ], // 100
+  [ { a: [-1, 0], b: [0, 0] }, { a: [1, 0], b: [2, 0] } ], // 101
+  [ { a: [-1, 0], b: [1, 0] } ], // 110
+  [ { a: [-1, 0], b: [2, 0] } ] // 111
 ]);
 
 // left
@@ -53,8 +53,6 @@ lines.push([
   [ { a: [2, 0], b: [2, 3] } ] // 111
 ]);
 
-var tmp = new THREE.Vector3();
-
 module.exports = {
   createLine: function (p) {
     var p1 = {x: p.a[0], y: p.a[1], z: 0};
@@ -65,22 +63,33 @@ module.exports = {
       return piece.subVectors(p2, p1);
     }();
 
+    var pLengthSq = function () {
+      return piece.lengthSq();
+    }();
+
     return {
       p1: p1,
       p2: p2,
 
       // find the nearest point to the given point on this line
-      nearestPoint: function (point) {
-        point.z = point.z || 0;
-        var normalizedProjection = tmp.subVectors(point, p1).setZ(0).dot(piece);
-        if (normalizedProjection < 0) {
-          return p1;
-        } else if (normalizedProjection > piece.lengthSq()) { // TODO: could cache lengthSq()
-          return p2;
-        } else {
-          return tmp.copy(piece).multiplyScalar(normalizedProjection / piece.lengthSq()).add(p1).clone();
-        }
-      }
+      nearestPoint: function () {
+        var tmp = new THREE.Vector3(),
+          p = tmp.clone();
+        return function (point) {
+          var normalizedProjection = tmp.subVectors(p.copy(point), p1).dot(piece);
+          if (normalizedProjection < 0) {
+            return p1;
+          } else if (normalizedProjection > pLengthSq) {
+            return p2;
+          } else {
+            return tmp.copy(piece)
+              .multiplyScalar(normalizedProjection / pLengthSq)
+              .add(p1);
+          }
+
+        };
+      }()
+
     };
   },
 

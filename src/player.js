@@ -1,11 +1,11 @@
-var MISSILE_MAX_SPEED = 0.5,
+var MISSILE_MAX_SPEED = 1.0,
   MISSILE_TORQUE = 0.8,
   MISSILE_TORQUE_DAMPING = 0.4,
   MISSILE_TRUST = new THREE.Vector3(0, 5.0, 0);
 
 var points = [
-  { x: 0, y: 0.175, r: 0.25 },
-  { x: 0, y: -0.175, r: 0.25 }
+  { x: 0, y: 0.175, z: 0, r: 0.25 },
+  { x: 0, y: -0.175, z: 0, r: 0.25 }
 ];
 
 module.exports = function (conf) {
