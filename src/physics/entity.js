@@ -130,9 +130,15 @@ module.exports = function () {
     control: function (state, force, torque) {},
     limitMomentum: function (state) {},
 
-    setPosition: function (x, y) { current.position.set(x, y, 0); },
-    get x() { return current.position.x; },
-    get y() { return current.position.y; },
+    setPosition: function (x, y) {
+      current.position.set(x, y, 0);
+    },
+    position: function () {
+      var p = new THREE.Vector3();
+      return function () {
+        return p.copy(current.position);
+      };
+    }(),
     orientation: function () {
       var q = new THREE.Quaternion();
       return function () {

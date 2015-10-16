@@ -53,9 +53,8 @@ module.exports = function (conf) {
   $(conf.input).on('input.move', handleInput);
 
   return {
-    get x() { return entity.x; },
-    get y() { return entity.y; },
-    get orientation() { return entity.orientation; },
+    position: entity.position,
+    orientation: entity.orientation,
     detatchInput: function () {
       $(conf.input).off('input.move', handleInput);
     },

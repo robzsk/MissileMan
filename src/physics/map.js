@@ -16,8 +16,8 @@ module.exports = function () {
     },
     getLines: function (entity) {
       // TODO: refactor this
-      var sx = Math.floor(entity.x),
-        sy = Math.floor(entity.y);
+      var sx = Math.floor(entity.position().x),
+        sy = Math.floor(entity.position().y);
 
       var lines = [];
       var mask = 0;

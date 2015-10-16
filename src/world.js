@@ -23,7 +23,7 @@ module.exports = function () {
     render: function (dt) {
       _.each(players, function (p) {
         p.avatar.setRotationFromQuaternion(p.orientation());
-        p.avatar.position.set(p.x, p.y, 0);
+        p.avatar.position.copy(p.position());
       });
 
       if (playerToWatch) {
