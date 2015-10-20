@@ -1,6 +1,5 @@
-var MISSILE_MAX_SPEED = 1.0,
-  MISSILE_TORQUE = 0.8,
-  MISSILE_TORQUE_DAMPING = 0.4,
+const MISSILE_MAX_SPEED = 5.0,
+  MISSILE_TORQUE = 3 * (Math.PI / 180),
   MISSILE_TRUST = new THREE.Vector3(0, 5.0, 0);
 
 var points = [
@@ -16,15 +15,16 @@ module.exports = function (conf) {
 
   var left = false, right = false, jump = false;
 
-  entity.forces = function (state, force, torque) {
-    var sa = state.angularVelocity;
+  entity.forces = function (rotation, force) {
+    if (left) {
+      rotation.z += MISSILE_TORQUE;
+    } else if (right) {
+      rotation.z -= MISSILE_TORQUE;
+    }
 
-    thrust(force, state.orientation, MISSILE_TRUST);
-
-    // damping
-    torque.x -= sa.x * MISSILE_TORQUE_DAMPING;
-    torque.y -= sa.y * MISSILE_TORQUE_DAMPING;
-    torque.z -= sa.z * MISSILE_TORQUE_DAMPING;
+    var q = new THREE.Quaternion();
+    q.setFromEuler(rotation);
+    thrust(force, q, MISSILE_TRUST);
   };
 
   entity.control = function (state, force, torque) {
@@ -36,11 +36,10 @@ module.exports = function (conf) {
     }
   };
 
-  entity.limitMomentum = function (state) {
-    var sm = state.momentum;
-    if (sm.length() > MISSILE_MAX_SPEED) {
-      sm.normalize();
-      sm.multiplyScalar(MISSILE_MAX_SPEED);
+  entity.limitVelocity = function (v) {
+    if (v.length() > MISSILE_MAX_SPEED) {
+      v.normalize();
+      v.multiplyScalar(MISSILE_MAX_SPEED);
     }
   };
 
@@ -54,7 +53,7 @@ module.exports = function (conf) {
 
   return {
     position: entity.position,
-    orientation: entity.orientation,
+    rotation: entity.rotation,
     detatchInput: function () {
       $(conf.input).off('input.move', handleInput);
     },

@@ -59,7 +59,7 @@ module.exports = {
     var p2 = {x: p.b[0], y: p.b[1], z: 0};
 
     var piece = function () {
-      var piece = new THREE.Vector3();
+      var piece = new THREE.Vector2();
       return piece.subVectors(p2, p1);
     }();
 
@@ -73,7 +73,7 @@ module.exports = {
 
       // find the nearest point to the given point on this line
       nearestPoint: function () {
-        var tmp = new THREE.Vector3(),
+        var tmp = new THREE.Vector2(),
           p = tmp.clone();
         return function (point) {
           var normalizedProjection = tmp.subVectors(p.copy(point), p1).dot(piece);

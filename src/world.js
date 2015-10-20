@@ -22,7 +22,8 @@ module.exports = function () {
 
     render: function (dt) {
       _.each(players, function (p) {
-        p.avatar.setRotationFromQuaternion(p.orientation());
+        p.avatar.rotation.x = p.avatar.rotation.y = p.avatar.rotation.z = 0;
+        p.avatar.rotation.z = p.rotation().z;
         p.avatar.position.copy(p.position());
       });
 
