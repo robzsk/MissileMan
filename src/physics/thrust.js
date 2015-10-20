@@ -3,7 +3,7 @@
 var m3 = new THREE.Matrix3(),
   dCopy = new THREE.Vector3();
 
-var toRotationMatrix = function (q) {
+const toRotationMatrix = function (q) {
   var fTx = q.x + q.x,
     fTy = q.y + q.y,
     fTz = q.z + q.z,

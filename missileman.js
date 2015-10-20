@@ -1,9 +1,9 @@
 (function () {
   'use strict';
 
-  var DEFAULT_LEVEL = 'level.json';
+  const DEFAULT_LEVEL = 'level.json';
 
-  var overlay = require('./src/overlay'),
+  const overlay = require('./src/overlay'),
     inputFactory = require('./src/input'),
     playerFactory = require('./src/player'),
     assets = require('./src/assets'),
@@ -16,7 +16,7 @@
     playerInput = inputFactory({ keys: { left: 37, right: 39, jump: 38 } }),
     overlayInput = inputFactory({ keys: { up: 38, down: 40, select: 13 } });
 
-  var setup = function (map) {
+  const setup = function (map) {
     spawnPoints = map.spawnPoints;
     _.each(map.targets, function (t) {
       world.addTarget(t);
@@ -25,8 +25,8 @@
     world.addBlocks(map.cells);
   };
 
-  var loadWorld = function (levelFile) {
-    var loadLevel = function (callback) {
+  const loadWorld = function (levelFile) {
+    const loadLevel = function (callback) {
       $.get(levelFile, function (req) {
         if (req.cells) {
           setup(req); // from a webserver the response is parsed already
@@ -36,7 +36,7 @@
         callback();
       });
     };
-    var addPlayers = function () {
+    const addPlayers = function () {
       if (players.length === 0) {
         players[currentPlayer] = playerFactory({
           input: playerInput,

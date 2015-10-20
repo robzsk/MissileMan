@@ -2,7 +2,7 @@ const MISSILE_MAX_SPEED = 5.0,
   MISSILE_TORQUE = 3 * (Math.PI / 180),
   MISSILE_TRUST = new THREE.Vector3(0, 5.0, 0);
 
-var points = [
+const points = [
   { x: 0, y: 0.175, z: 0, r: 0.25 },
   { x: 0, y: -0.175, z: 0, r: 0.25 }
 ];
@@ -10,7 +10,7 @@ var points = [
 module.exports = function (conf) {
   'use strict';
 
-  var entity = require('./physics/entity')(),
+  const entity = require('./physics/entity')(),
     thrust = require('./physics/thrust');
 
   var left = false, right = false, jump = false;
@@ -43,7 +43,7 @@ module.exports = function (conf) {
     }
   };
 
-  var handleInput = function (e, m) {
+  const handleInput = function (e, m) {
     left = m.left;
     right = m.right;
     jump = m.jump;

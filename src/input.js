@@ -1,6 +1,6 @@
 'use strict';
 
-var replayInput = function (file) {
+const replayInput = function (file) {
   var moves = JSON.parse(file);
   return {
     update: function (tick) {
@@ -12,11 +12,11 @@ var replayInput = function (file) {
   };
 };
 
-var keyboardInput = function (keys) {
+const keyboardInput = function (keys) {
   var current = _.mapObject(keys, function () { return false; }),
     prev = _.clone(current), moves = {};
 
-  var onkey = function (ev, kc, down) {
+  const onkey = function (ev, kc, down) {
     _.findKey(keys, function (v, k) {
       if (v === kc) {
         current[k] = down;

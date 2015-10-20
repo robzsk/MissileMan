@@ -3,7 +3,7 @@
 module.exports = function () {
   var mesh = {};
 
-  var createCube = function (color) {
+  const createCube = function (color) {
     var geometry = new THREE.BoxGeometry(1, 1, 1),
       material = new THREE.MeshBasicMaterial({ color: color }),
       cube = new THREE.Mesh(geometry, material);

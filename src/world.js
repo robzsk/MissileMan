@@ -1,7 +1,7 @@
 module.exports = function () {
   'use strict';
 
-  var assets = require('./assets'),
+  const assets = require('./assets'),
     sceneFactory = require('./scene'),
     mapFactory = require('./physics/map');
 

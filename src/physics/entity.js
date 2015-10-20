@@ -5,44 +5,43 @@ module.exports = function () {
   var radiusSq = Math.pow(radius, 2);
 
   var rotation = new THREE.Euler();
-  var vel = new THREE.Vector2(0, 0);
-  var pos = new THREE.Vector2(0, 0);
-  var tmp = new THREE.Vector2();
+  var velocity = new THREE.Vector2(0, 0);
+  var position = new THREE.Vector2(0, 0);
 
-  var detectCollision = function (nearestPointOnLine) {
-    var pointToPos = new THREE.Vector2();
-    pointToPos.copy(pos)
-      .sub(nearestPointOnLine);
-    var distSquared = pointToPos.lengthSq();
-    if (distSquared < radiusSq) {
-      var depth = radius - Math.sqrt(distSquared);
-      var offset = pointToPos.normalize().multiplyScalar(depth);
-      pos.add(offset);
-      vel.sub(offset);
-    }
-  };
+  const detectCollision = function () {
+    var pointToPos = new THREE.Vector2(), depth, offset, distSquared;
+    return function (nearestPointOnLine) {
+      pointToPos.copy(position)
+        .sub(nearestPointOnLine);
+      distSquared = pointToPos.lengthSq();
+      if (distSquared < radiusSq) {
+        depth = radius - Math.sqrt(distSquared);
+        offset = pointToPos.normalize().multiplyScalar(depth);
+        position.add(offset);
+        velocity.sub(offset);
+      }
+    };
+  }();
 
-  var integrate = function (dt, lines) {
-    tmp.set(0, 0);
-    entity.forces(rotation, tmp);
-
-    tmp.multiplyScalar(dt);
-    vel.add(tmp);
-
-    entity.limitVelocity(vel);
-
-    tmp.copy(vel).multiplyScalar(dt);
-    pos.add(tmp);
-
-    _.each(lines, function (l) {
-      detectCollision(l.nearestPoint(pos));
-    });
-
-  };
+  const integrate = function () {
+    var tmp = new THREE.Vector2();
+    return function (dt, points, lines) {
+      tmp.set(0, 0);
+      entity.forces(rotation, tmp);
+      tmp.multiplyScalar(dt);
+      velocity.add(tmp);
+      entity.limitVelocity(velocity);
+      tmp.copy(velocity).multiplyScalar(dt);
+      position.add(tmp);
+      _.each(lines, function (l) {
+        detectCollision(l.nearestPoint(position));
+      });
+    };
+  }();
 
   var entity = {
     update: function (dt, points, lines) {
-      integrate(dt, lines);
+      integrate(dt, points, lines);
     },
 
     // override these
@@ -50,14 +49,16 @@ module.exports = function () {
     limitVelocity: function (v) {},
 
     setPosition: function (x, y) {
-      pos.set(x, y, 0);
+      position.set(x, y, 0);
     },
+
     position: function () {
       var p = new THREE.Vector3();
       return function () {
-        return p.set(pos.x, pos.y, 0);
+        return p.set(position.x, position.y, 0);
       };
     }(),
+
     rotation: function () {
       var r = new THREE.Euler();
       return function () {

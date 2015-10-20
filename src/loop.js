@@ -1,7 +1,7 @@
 module.exports = function () {
   'use strict';
 
-  var stats = function () {
+  const stats = function () {
     var s = {begin: function () {},end: function () {}};
 
     if (typeof Stats !== 'undefined') {
@@ -15,7 +15,7 @@ module.exports = function () {
     return s;
   }();
 
-  var timestamp = function () {
+  const timestamp = function () {
     return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
   };
 
