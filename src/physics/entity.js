@@ -1,25 +1,41 @@
 module.exports = function () {
   'use strict';
 
-  var radius = 0.425;
-  var radiusSq = Math.pow(radius, 2);
-
   var rotation = new THREE.Euler();
   var velocity = new THREE.Vector2(0, 0);
   var position = new THREE.Vector2(0, 0);
 
   const detectCollision = function () {
     var pointToPos = new THREE.Vector2(), depth, offset, distSquared;
-    return function (nearestPointOnLine) {
-      pointToPos.copy(position)
+    return function (point, nearestPointOnLine) {
+      pointToPos.copy(point)
         .sub(nearestPointOnLine);
       distSquared = pointToPos.lengthSq();
-      if (distSquared < radiusSq) {
-        depth = radius - Math.sqrt(distSquared);
+      if (distSquared < point.rs) {
+        depth = point.r - Math.sqrt(distSquared);
         offset = pointToPos.normalize().multiplyScalar(depth);
         position.add(offset);
         velocity.sub(offset);
       }
+    };
+  }();
+
+  const handleCollisions = function (points, lines) {
+    var pointToWorld = new THREE.Vector3(),
+      bodyToWorld = new THREE.Matrix4();
+    return function (points, lines) {
+      pointToWorld.set(position.x, position.y, 0);
+      bodyToWorld.makeRotationFromEuler(rotation)
+        .setPosition(pointToWorld);
+      _.each(lines, function (l) {
+        _.each(points, function (p) {
+          pointToWorld.set(p.x, p.y, 0)
+            .applyMatrix4(bodyToWorld);
+          pointToWorld.r = p.r;
+          pointToWorld.rs = p.rs;
+          detectCollision(pointToWorld, l.nearestPoint(pointToWorld));
+        });
+      });
     };
   }();
 
@@ -33,9 +49,9 @@ module.exports = function () {
       entity.limitVelocity(velocity);
       tmp.copy(velocity).multiplyScalar(dt);
       position.add(tmp);
-      _.each(lines, function (l) {
-        detectCollision(l.nearestPoint(position));
-      });
+      if (lines.length > 0) {
+        handleCollisions(points, lines);
+      }
     };
   }();
 

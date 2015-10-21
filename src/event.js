@@ -25,10 +25,12 @@ module.exports = function () {
           }
           listeners[evt].push(callback);
         };
-        obj.trigger = function (evt) {
+        obj.trigger = function (evt, p) {
           var ls = listeners[evt];
           if (_.isObject(ls)) {
-            _.each(ls, callMethod);
+            _.each(ls, function (m) {
+              m.apply(obj, p || []);
+            });
           }
         };
       }();

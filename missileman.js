@@ -3,7 +3,8 @@
 
   const DEFAULT_LEVEL = 'level.json';
 
-  const overlay = require('./src/overlay'),
+  const event = require('./src/event'),
+    overlay = require('./src/overlay'),
     inputFactory = require('./src/input'),
     playerFactory = require('./src/player'),
     assets = require('./src/assets'),
@@ -110,12 +111,12 @@
     });
   });
 
-  $(loop).on('loop.update', function (e, ticks, step) {
+  event(loop).on('loop.update', function (ticks, step) {
     overlayInput.update(ticks);
     world.update(ticks, step);
   });
 
-  $(loop).on('loop.render', function (e, dt) {
+  event(loop).on('loop.render', function (dt) {
     world.render(dt);
   });
 

@@ -1,6 +1,6 @@
 module.exports = function () {
   'use strict';
-
+  const event = require('./event');
   const stats = function () {
     var s = {begin: function () {},end: function () {}};
 
@@ -34,10 +34,10 @@ module.exports = function () {
     dt = dt + Math.min(1, (now - last) / 1000);
     while(dt > step) {
       dt = dt - step;
-      $(loop).trigger('loop.update', [ticks, step]);
+      event(loop).trigger('loop.update', [ticks, step]);
       ticks += 1;
     }
-    $(loop).trigger('loop.render', dt);
+    event(loop).trigger('loop.render', [dt]);
     last = now;
     stats.end();
   }();

@@ -2,9 +2,10 @@ const MISSILE_MAX_SPEED = 5.0,
   MISSILE_TORQUE = 3 * (Math.PI / 180),
   MISSILE_TRUST = new THREE.Vector3(0, 5.0, 0);
 
+const RADIUS = 0.25;
 const points = [
-  { x: 0, y: 0.175, z: 0, r: 0.25 },
-  { x: 0, y: -0.175, z: 0, r: 0.25 }
+  { x: 0, y: 0.175, z: 0, r: RADIUS, rs: RADIUS * RADIUS },
+  { x: 0, y: -0.175, z: 0, r: RADIUS, rs: RADIUS * RADIUS }
 ];
 
 module.exports = function (conf) {
@@ -16,15 +17,24 @@ module.exports = function (conf) {
   var left = false, right = false, jump = false;
 
   entity.forces = function (rotation, force) {
+    // if (left) {
+    //   rotation.z += MISSILE_TORQUE;
+    // } else if (right) {
+    //   rotation.z -= MISSILE_TORQUE;
+    // }
+    //
+    // var q = new THREE.Quaternion();
+    // q.setFromEuler(rotation);
+    // thrust(force, q, MISSILE_TRUST);
+
+    // rotation.z += MISSILE_TORQUE;
     if (left) {
-      rotation.z += MISSILE_TORQUE;
-    } else if (right) {
-      rotation.z -= MISSILE_TORQUE;
+      force.x -= 3;
+    }else if (right) {
+      force.x += 3;
     }
 
-    var q = new THREE.Quaternion();
-    q.setFromEuler(rotation);
-    thrust(force, q, MISSILE_TRUST);
+    force.y -= 5;
   };
 
   entity.control = function (state, force, torque) {
