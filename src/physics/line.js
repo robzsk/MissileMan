@@ -1,3 +1,95 @@
+// 1 2 3
+// 4   5
+// 6 7 8
+// or
+//  1   2   4
+//  8      16
+// 32  64 128
+var linesII = [
+  [ { a: [0, 1], b: [-1, 1], n: [0, -1] }, { a: [0, 2], b: [0, 1], n: [1, 0] } ], // 1
+  [ { a: [0, 1], b: [0, 2], n: [-1, 0] }, { a: [1, 1], b: [0, 1], n: [0, -1] }, { a: [1, 2], b: [1, 1], n: [1, 0] }], // 2
+  [ { a: [2, 1], b: [1, 1], n: [0, -1] }, { a: [1, 1], b: [1, 2], n: [-1, 0] } ], // 4
+  [ { a: [0, 1], b: [1, 1], n: [0, 1] }, { a: [0, 1], b: [0, 0], n: [1, 0] }, { a: [0, 0], b: [-1, 0], n: [0, -1] } ], // 8
+  [ { a: [1, 1], b: [2, 1], n: [0, 1] }, { a: [1, 0], b: [1, 1], n: [-1, 0] }, { a: [2, 1], b: [1, 1], n: [0, -1] } ], // 16
+  [ { a: [-1, 0], b: [0, 0], n: [0, 1] }, { a: [0, 0], b: [0, -1], n: [1, 0] } ], // 32
+  [ { a: [0, -1], b: [0, 0], n: [-1, 0] }, { a: [0, 0], b: [0, -1], n: [1, 0] }, { a: [1, 0], b: [1, -1], n: [1, 0] } ], // 64
+  [ { a: [1, -1], b: [1, 0], n: [-1, 0] }, { a: [1, 0], b: [2, 0], n: [0, 1] } ], // 128
+];
+
+var clone = function (obj) {
+  return JSON.parse(JSON.stringify(obj));
+};
+var output = [];
+
++function permutate () {
+  _.times(256, function (n) {
+    var a = [];
+    _.times(8, function (b) {
+      if (n & Math.pow(2, b)) {
+        _.each(linesII[b], function (line) {
+          a.push(clone(line));
+        });
+      }
+    });
+    output.push(a);
+  });
+}();
+
+var count = function () {
+  var c = 0;
+  _.each(output, function (out) {
+    c += out.length;
+  });
+  return c;
+};
+console.log('before: ' + count());
+
++function optimise () {
+  // remove opposing lines
+  +function removeOpp () {
+    _.each(output, function (lines, n) {
+      _.each(lines, function (ln1) {
+        var f = _.find(output[n], function (ln2) {
+          if (ln1 === ln2) return false;
+          return _.isEqual(ln1.a, ln2.b) && _.isEqual(ln1.b, ln2.a);
+        });
+        if (_.isObject(f)) {
+          f.reject = ln1.reject = true;
+        }
+      });
+      output[n] = _.reject(lines, function (ln) { return ln.reject; });
+    });
+  }();
+
+  // add colinear
+  +function addColinear () {
+    _.each(output, function (lines, n) {
+      _.each(lines, function (ln1) {
+        _.each(lines, function (ln2) {
+          if (ln1 === ln2 || ln1.reject || ln2.reject) {
+            return;
+          }
+          if (_.isEqual(ln1.n, ln2.n)) { // normals are equal
+            if (_.isEqual(ln1.b, ln2.a)) {
+              ln1.b = clone(ln2.b);
+              ln2.reject = true;
+            }
+          }
+        });
+      });
+      output[n] = _.reject(lines, function (ln) { return ln.reject; });
+    });
+  }();
+
+}();
+
+console.log('after: ' + count());
+
+_.each(output, function (out, n) {
+  output[n] = JSON.stringify(out);
+});
+require('fs').writeFile('./test.json', JSON.stringify(output, null, 1).replace(/\\"/g, "'").replace(/"/g, '').replace(/'/g, '"'));
+
 // PROTOTYPE
 // TODO:major refactor this
 // TODO: move this into a map module
