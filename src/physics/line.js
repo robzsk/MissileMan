@@ -8,12 +8,12 @@
 var linesII = [
   [ { a: [0, 1], b: [-1, 1], n: [0, -1] }, { a: [0, 2], b: [0, 1], n: [1, 0] } ], // 1
   [ { a: [0, 1], b: [0, 2], n: [-1, 0] }, { a: [1, 1], b: [0, 1], n: [0, -1] }, { a: [1, 2], b: [1, 1], n: [1, 0] }], // 2
-  [ { a: [2, 1], b: [1, 1], n: [0, -1] }, { a: [1, 1], b: [1, 2], n: [-1, 0] } ], // 4
-  [ { a: [0, 1], b: [1, 1], n: [0, 1] }, { a: [0, 1], b: [0, 0], n: [1, 0] }, { a: [0, 0], b: [-1, 0], n: [0, -1] } ], // 8
-  [ { a: [1, 1], b: [2, 1], n: [0, 1] }, { a: [1, 0], b: [1, 1], n: [-1, 0] }, { a: [2, 1], b: [1, 1], n: [0, -1] } ], // 16
-  [ { a: [-1, 0], b: [0, 0], n: [0, 1] }, { a: [0, 0], b: [0, -1], n: [1, 0] } ], // 32
-  [ { a: [0, -1], b: [0, 0], n: [-1, 0] }, { a: [0, 0], b: [0, -1], n: [1, 0] }, { a: [1, 0], b: [1, -1], n: [1, 0] } ], // 64
-  [ { a: [1, -1], b: [1, 0], n: [-1, 0] }, { a: [1, 0], b: [2, 0], n: [0, 1] } ], // 128
+  [ { a: [2, 1], b: [1, 1], n: [0, -1] }, { a: [1, 1], b: [1, 2], n: [-1, 0] } ], // 3
+  [ { a: [-1, 1], b: [0, 1], n: [0, 1] }, { a: [0, 1], b: [0, 0], n: [1, 0] }, { a: [0, 0], b: [-1, 0], n: [0, -1] } ], // 4
+  [ { a: [1, 1], b: [2, 1], n: [0, 1] }, { a: [1, 0], b: [1, 1], n: [-1, 0] }, { a: [2, 0], b: [1, 0], n: [0, -1] } ], // 5
+  [ { a: [-1, 0], b: [0, 0], n: [0, 1] }, { a: [0, 0], b: [0, -1], n: [1, 0] } ], // 6
+  [ { a: [0, -1], b: [0, 0], n: [-1, 0] }, { a: [0, 0], b: [1, 0], n: [0, 1] }, { a: [1, 0], b: [1, -1], n: [1, 0] } ], // 7
+  [ { a: [1, -1], b: [1, 0], n: [-1, 0] }, { a: [1, 0], b: [2, 0], n: [0, 1] } ], // 8
 ];
 
 var clone = function (obj) {
@@ -44,7 +44,7 @@ var count = function () {
 };
 console.log('before: ' + count());
 
-+function optimise () {
+function optimise () {
   // remove opposing lines
   +function removeOpp () {
     _.each(output, function (lines, n) {
@@ -81,14 +81,15 @@ console.log('before: ' + count());
     });
   }();
 
-}();
+}
+optimise();
 
 console.log('after: ' + count());
 
 _.each(output, function (out, n) {
   output[n] = JSON.stringify(out);
 });
-require('fs').writeFile('./test.json', JSON.stringify(output, null, 1).replace(/\\"/g, "'").replace(/"/g, '').replace(/'/g, '"'));
+require('fs').writeFile('./test.json', 'var lines=' + JSON.stringify(output, null, 1).replace(/\\"/g, "'").replace(/"/g, '').replace(/'/g, '"') + ';');
 
 // PROTOTYPE
 // TODO:major refactor this
