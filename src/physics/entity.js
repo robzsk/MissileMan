@@ -6,16 +6,20 @@ module.exports = function () {
   var position = new THREE.Vector2(0, 0);
 
   const detectCollision = function () {
-    var pointToPos = new THREE.Vector2(), depth, offset, distSquared;
-    return function (point, nearestPointOnLine) {
+    var pointToPos = new THREE.Vector2(), depth, offset, distSquared, cNormal = new THREE.Vector2();
+    return function (point, nearestPointOnLine, lineNormal) {
       pointToPos.copy(point)
         .sub(nearestPointOnLine);
-      distSquared = pointToPos.lengthSq();
-      if (distSquared < point.rs) {
-        depth = point.r - Math.sqrt(distSquared);
-        offset = pointToPos.normalize().multiplyScalar(depth);
-        position.add(offset);
-        velocity.sub(offset);
+      cNormal.copy(pointToPos).normalize();
+      if (cNormal.dot(lineNormal) >= 0) { // behind the line?
+        distSquared = pointToPos.lengthSq();
+        if (distSquared < point.rs) {
+          depth = point.r - Math.sqrt(distSquared);
+          offset = pointToPos.normalize().multiplyScalar(depth);
+          position.add(offset);
+          velocity.sub(cNormal.multiplyScalar(velocity.dot(cNormal)));
+          entity.onCollision(lineNormal);
+        }
       }
     };
   }();
@@ -31,9 +35,9 @@ module.exports = function () {
         _.each(points, function (p) {
           pointToWorld.set(p.x, p.y, 0)
             .applyMatrix4(bodyToWorld);
-          pointToWorld.r = p.r;
-          pointToWorld.rs = p.rs;
-          detectCollision(pointToWorld, l.nearestPoint(pointToWorld));
+          pointToWorld.r = p.r; // radius
+          pointToWorld.rs = p.rs; // radius squared
+          detectCollision(pointToWorld, l.nearestPoint(pointToWorld), l.n);
         });
       });
     };
@@ -63,6 +67,7 @@ module.exports = function () {
     // override these
     forces: function (r, force) {},
     limitVelocity: function (v) {},
+    onCollision: function () {},
 
     setPosition: function (x, y) {
       position.set(x, y, 0);

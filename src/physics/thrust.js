@@ -1,7 +1,8 @@
 'use strict';
 
 var m3 = new THREE.Matrix3(),
-  dCopy = new THREE.Vector3();
+  dCopy = new THREE.Vector3(),
+  quat = new THREE.Quaternion();
 
 const toRotationMatrix = function (q) {
   var fTx = q.x + q.x,
@@ -22,9 +23,9 @@ const toRotationMatrix = function (q) {
     fTxz - fTwy, fTyz + fTwx, 0);
 };
 
-module.exports = function (current, orientation, direction) {
-  dCopy.copy(direction);
-  dCopy.applyMatrix3(toRotationMatrix(orientation));
+module.exports = function (current, rotation, direction) {
+  dCopy.copy(direction)
+    .applyMatrix3(toRotationMatrix(quat.setFromEuler(rotation)));
   current.x += dCopy.x;
   current.y += dCopy.y;
 };

@@ -31,14 +31,11 @@ module.exports = function () {
     requestAnimationFrame(run);
     stats.begin();
     now = timestamp();
-    dt = dt + Math.min(1, (now - last) / 1000);
-    while(dt > step) {
-      dt = dt - step;
-      event(loop).trigger('loop.update', [ticks, step]);
-      ticks += 1;
-    }
-    event(loop).trigger('loop.render', [dt]);
+    dt = now - last;
     last = now;
+    event(loop).trigger('loop.update', [ticks, step]);
+    event(loop).trigger('loop.render', [dt]);
+    ticks += 1;
     stats.end();
   }();
 
