@@ -5,7 +5,7 @@ module.exports = function () {
     velocity = new THREE.Vector2(0, 0),
     position = new THREE.Vector2(0, 0);
 
-  const detectCollision = function () {
+  var detectCollision = function () {
     var pointToPos = new THREE.Vector2(), depth, offset, distSquared, cNormal = new THREE.Vector2();
     return function (point, nearestPointOnLine, lineNormal) {
       pointToPos.copy(point)
@@ -18,13 +18,13 @@ module.exports = function () {
           offset = pointToPos.normalize().multiplyScalar(depth);
           position.add(offset);
           velocity.sub(cNormal.multiplyScalar(velocity.dot(cNormal)));
-          entity.onCollision(lineNormal);
+          $(entity).trigger('entity.collision');
         }
       }
     };
   }();
 
-  const handleCollisions = function (points, lines) {
+  var handleCollisions = function (points, lines) {
     var pointToWorld = new THREE.Vector3(),
       bodyToWorld = new THREE.Matrix4();
     return function (points, lines) {
@@ -43,7 +43,7 @@ module.exports = function () {
     };
   }();
 
-  const integrate = function () {
+  var integrate = function () {
     var tmp = new THREE.Vector2();
     return function (dt, points, lines) {
       tmp.set(0, 0);
@@ -67,7 +67,6 @@ module.exports = function () {
     // override these
     forces: function (r, force) {},
     limitVelocity: function (v) {},
-    onCollision: function () {},
 
     reset: function (x, y) {
       position.set(x, y, 0);
@@ -100,11 +99,12 @@ module.exports = function () {
       };
     }(),
 
-    checkCollides: function (points, lines) {
-      if (lines.length > 0) {
-        handleCollisions(points, lines);
-      }
-    }
+    checkCollides: function () {
+      var getLines = require('./line').getBoxLines;
+      return function (points, box) {
+        handleCollisions(points, getLines(box.x, box.y));
+      };
+    }()
 
   };
 

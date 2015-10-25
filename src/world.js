@@ -13,12 +13,7 @@ module.exports = function () {
     scene = sceneFactory($('#canvas'));
 
   // TODO: move this somewhere else
-  var getLinesForTarget = function () {
-    var lines = require('./physics/line');
-    return function (target) {
-      return lines.getBoxLines(target.x, target.y);
-    };
-  }();
+  var getLinesForTarget = function () {}();
 
   var world = {
     update: function (ticks, step) {
@@ -29,7 +24,7 @@ module.exports = function () {
         // only need to check targets close to the player
         // assuming a lot of targets on the map
         _.every(targets, function (t) {
-          if (p.checkCollides(getLinesForTarget(t))) {
+          if (p.checkCollides(t)) {
             scene.remove(p.avatar);
             scene.remove(t.avatar);
             players = _.without(players, p);

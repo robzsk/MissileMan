@@ -85,14 +85,14 @@ module.exports = function (conf) {
 
   };
 
-  const handleMorph = function (m) {
+  var handleMorph = function (m) {
     if (!keys.morph && m) {
       morph.go();
     }
     keys.morph = m;
   };
 
-  const handleInput = function (e, m) {
+  var handleInput = function (e, m) {
     keys.left = m.left;
     keys.right = m.right;
     keys.jump = m.jump;
@@ -124,18 +124,14 @@ module.exports = function (conf) {
       return morph.getScale();
     },
 
-    checkCollides: function (lines) {
+    checkCollides: function (box) {
       var collides = false;
-      // TODO: need to use an event here instead?
-      entity.onCollision = function (lineNormal) {
+      var onCollision = function () {
         collides = true;
       };
-
-      entity.checkCollides(points, lines);
-
-      // stop listening to the event which is not an event...
-      entity.onCollision = function (lineNormal) {};
-
+      $(entity).on('entity.collision', onCollision);
+      entity.checkCollides(points, box);
+      $(entity).off('entity.collision', onCollision);
       return collides;
     }
 
