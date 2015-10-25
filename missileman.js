@@ -14,7 +14,7 @@
   var players = [],
     spawnPoints = [],
     currentPlayer = 0,
-    playerInput = inputFactory({ keys: { left: 37, right: 39, jump: 38 } }),
+    playerInput = inputFactory({ keys: { left: 37, right: 39, jump: 38, morph: 67 } }),
     overlayInput = inputFactory({ keys: { up: 38, down: 40, select: 13 } });
 
   const setup = function (map) {

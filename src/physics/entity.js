@@ -1,9 +1,9 @@
 module.exports = function () {
   'use strict';
 
-  var rotation = new THREE.Euler();
-  var velocity = new THREE.Vector2(0, 0);
-  var position = new THREE.Vector2(0, 0);
+  var rotation = new THREE.Euler(),
+    velocity = new THREE.Vector2(0, 0),
+    position = new THREE.Vector2(0, 0);
 
   const detectCollision = function () {
     var pointToPos = new THREE.Vector2(), depth, offset, distSquared, cNormal = new THREE.Vector2();
@@ -73,10 +73,21 @@ module.exports = function () {
       position.set(x, y, 0);
     },
 
+    setRotation: function (z) {
+      rotation.set(0, 0, z || 0);
+    },
+
     position: function () {
       var p = new THREE.Vector3();
       return function () {
         return p.set(position.x, position.y, 0);
+      };
+    }(),
+
+    velocity: function () {
+      var v = new THREE.Vector3();
+      return function () {
+        return v.set(velocity.x, velocity.y, 0);
       };
     }(),
 

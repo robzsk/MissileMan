@@ -25,6 +25,7 @@ module.exports = function () {
         p.avatar.rotation.x = p.avatar.rotation.y = p.avatar.rotation.z = 0;
         p.avatar.rotation.z = p.rotation().z;
         p.avatar.position.copy(p.position());
+        p.avatar.scale.set(p.getScale(), p.getScale(), p.getScale());
       });
 
       if (playerToWatch) {
