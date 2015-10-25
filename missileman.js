@@ -61,7 +61,7 @@
       players[currentPlayer].detatchInput();
       players[currentPlayer] = playerFactory({
         input: inputFactory({replay: playerInput.serialize()}),
-        obj: spawnPoints[currentPlayer]
+        pos: spawnPoints[currentPlayer]
       });
 
       currentPlayer += 1;
@@ -75,7 +75,7 @@
       }
       players[currentPlayer] = playerFactory({
         input: playerInput,
-        obj: spawnPoints[currentPlayer]
+        pos: spawnPoints[currentPlayer]
       });
 
       setTimeout(function () {

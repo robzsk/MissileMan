@@ -25,6 +25,12 @@ module.exports = function () {
     };
 
   const morph = {
+    reset: function () {
+      scale = 1;
+      n = 0;
+      isMan = true;
+      up = down = false;
+    },
     // override these
     changeToMan: function () {},
     changeToMissile: function () {},
@@ -68,4 +74,4 @@ module.exports = function () {
   };
 
   return morph;
-}();
+};

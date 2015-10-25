@@ -9,14 +9,37 @@ module.exports = function () {
     targets = [],
     map = mapFactory(),
     playerToWatch,
-    world,
     MAP = { tw: 64, th: 48 }, // TODO: this is also hard coded in map.js. we don't want these shenanigans
     scene = sceneFactory($('#canvas'));
 
-  return {
+  // TODO: move this somewhere else
+  var getLinesForTarget = function () {
+    var lines = require('./physics/line');
+    return function (target) {
+      return lines.getBoxLines(target.x, target.y);
+    };
+  }();
+
+  var world = {
     update: function (ticks, step) {
       _.each(players, function (p) {
         p.update(ticks, step, map.getLines(p));
+
+        // TODO: this could be more efficient
+        // only need to check targets close to the player
+        // assuming a lot of targets on the map
+        _.every(targets, function (t) {
+          if (p.checkCollides(getLinesForTarget(t))) {
+            scene.remove(p.avatar);
+            scene.remove(t.avatar);
+            players = _.without(players, p);
+            targets = _.without(targets, t);
+            $(world).trigger('world.player.killed', p);
+            return false;
+          }
+          return true;
+        });
+
       });
     },
 
@@ -82,4 +105,5 @@ module.exports = function () {
     }
 
   };
+  return world;
 }();

@@ -29,7 +29,7 @@ module.exports = function () {
       bodyToWorld = new THREE.Matrix4();
     return function (points, lines) {
       pointToWorld.set(position.x, position.y, 0);
-      bodyToWorld.makeRotationFromEuler(rotation)
+      bodyToWorld.makeRotationFromEuler(rotation) // TODO: we could do this just once per iteration
         .setPosition(pointToWorld);
       _.each(lines, function (l) {
         _.each(points, function (p) {
@@ -69,8 +69,10 @@ module.exports = function () {
     limitVelocity: function (v) {},
     onCollision: function () {},
 
-    setPosition: function (x, y) {
+    reset: function (x, y) {
       position.set(x, y, 0);
+      velocity.set(0, 0, 0);
+      rotation.set(0, 0, 0);
     },
 
     setRotation: function (z) {
@@ -96,7 +98,13 @@ module.exports = function () {
       return function () {
         return r.copy(rotation);
       };
-    }()
+    }(),
+
+    checkCollides: function (points, lines) {
+      if (lines.length > 0) {
+        handleCollisions(points, lines);
+      }
+    }
 
   };
 

@@ -27,6 +27,7 @@ module.exports = function () {
 
       loadMesh('empty', 'empty');
       loadMesh('solid', 'solid');
+      loadMesh('target', 'solid', 0xac4442);
       loadMesh('player', 'player', 0x0179d5);
     },
 
@@ -40,7 +41,7 @@ module.exports = function () {
     },
 
     cubeTarget: function () {
-      return createCube(0xac4442);
+      return mesh['target'].clone();
     },
 
     cubePlayer: function () {

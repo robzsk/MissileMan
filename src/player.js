@@ -16,9 +16,9 @@ const points = [
 module.exports = function (conf) {
   'use strict';
 
-  const thrust = require('./physics/thrust');
-  var entity = require('./physics/entity')();
-  const morph = require('./morph');
+  var thrust = require('./physics/thrust'),
+    entity = require('./physics/entity')(),
+    morph = require('./morph')();
 
   var keys = {
     left: false, right: false, jump: false, morph: false,
@@ -66,8 +66,6 @@ module.exports = function (conf) {
 
   };
 
-  entity.onCollision = function (lineNormal) {},
-
   entity.limitVelocity = function (v) {
     if (morph.isMan()) {
       v.x = v.x < 0 ? Math.max(v.x, -MAN_MAX_YSPEED) : Math.min(v.x, MAN_MAX_YSPEED);
@@ -111,8 +109,9 @@ module.exports = function (conf) {
     },
 
     reset: function () {
+      morph.reset();
       keys.reset();
-      entity.setPosition(conf.pos.x, conf.pos.y);
+      entity.reset(conf.pos.x, conf.pos.y);
     },
 
     update: function (ticks, dt, lines) {
@@ -123,6 +122,21 @@ module.exports = function (conf) {
 
     getScale: function () {
       return morph.getScale();
+    },
+
+    checkCollides: function (lines) {
+      var collides = false;
+      // TODO: need to use an event here instead?
+      entity.onCollision = function (lineNormal) {
+        collides = true;
+      };
+
+      entity.checkCollides(points, lines);
+
+      // stop listening to the event which is not an event...
+      entity.onCollision = function (lineNormal) {};
+
+      return collides;
     }
 
   };
