@@ -3,13 +3,13 @@
 
   const DEFAULT_LEVEL = 'level.json';
 
-  const event = require('./src/event'),
+  const event = require('./src/engine/event'),
     overlay = require('./src/overlay'),
     inputFactory = require('./src/input'),
     playerFactory = require('./src/player'),
     assets = require('./src/assets'),
     world = require('./src/world'),
-    loop = require('./src/loop');
+    loop = require('./src/engine/loop');
 
   var players = [],
     spawnPoints = [],

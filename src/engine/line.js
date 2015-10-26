@@ -4,6 +4,8 @@ var lines = [[], [{'a': [0, 1],'b': [-1, 1],'n': [0, -1]}, {'a': [0, 2],'b': [0,
 // box lines
 var box = [{a: [0, 0], b: [0, 1], n: [-1, 0]}, {a: [0, 1], b: [1, 1], n: [0, 1]}, {a: [1, 1], b: [1, 0], n: [1, 0]}, {a: [1, 0], b: [0, 0], n: [0, -1]}];
 
+// TODO: this is not great use of memory
+// do this better
 var createLine = function (p, x, y) {
   var p1 = {x: p.a[0] + x, y: p.a[1] + y},
     p2 = {x: p.b[0] + x, y: p.b[1] + y},

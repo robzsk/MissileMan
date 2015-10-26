@@ -16,8 +16,8 @@ const points = [
 module.exports = function (conf) {
   'use strict';
 
-  var thrust = require('./physics/thrust'),
-    entity = require('./physics/entity')(points),
+  var thrust = require('./engine/thrust'),
+    entity = require('./engine/entity')(points),
     morph = require('./morph')();
 
   var keys = {

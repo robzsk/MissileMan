@@ -3,7 +3,8 @@ module.exports = function () {
 
   const assets = require('./assets'),
     sceneFactory = require('./scene'),
-    mapFactory = require('./physics/map');
+    mapFactory = require('./engine/map'),
+    getLines = require('./engine/line').getBoxLines;
 
   var players = [],
     targets = [],
@@ -17,8 +18,6 @@ module.exports = function () {
 
   var world = {
     update: function (ticks, step) {
-      var getLines = require('./physics/line').getBoxLines;
-
       _.each(players, function (p) {
         p.update(ticks, step);
 
