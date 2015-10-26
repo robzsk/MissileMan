@@ -1,6 +1,8 @@
 module.exports = function (points) {
   'use strict';
 
+  var event = require('./event');
+
   var rotation = new THREE.Euler(),
     velocity = new THREE.Vector2(0, 0),
     position = new THREE.Vector2(0, 0);
@@ -29,10 +31,10 @@ module.exports = function (points) {
       var force = new THREE.Vector2();
       return function (dt) {
         force.set(0, 0);
-        $(entity).trigger('entity.applyForce', [rotation, force]);
+        event(entity).trigger('entity.applyForce', [rotation, force]);
         force.multiplyScalar(dt);
         velocity.add(force);
-        $(entity).trigger('entity.applyDamping', [velocity]);
+        event(entity).trigger('entity.applyDamping', [velocity]);
         force.copy(velocity).multiplyScalar(dt);
         position.add(force);
         toWorld();

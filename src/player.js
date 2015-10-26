@@ -16,7 +16,8 @@ const points = [
 module.exports = function (conf) {
   'use strict';
 
-  var thrust = require('./engine/thrust'),
+  var event = require('./engine/event'),
+    thrust = require('./engine/thrust'),
     entity = require('./engine/entity')(points),
     morph = require('./morph')();
 
@@ -27,11 +28,11 @@ module.exports = function (conf) {
     }
   };
 
-  $(morph).on('morph.changeToMan', function () {
+  event(morph).on('morph.changeToMan', function () {
     entity.setRotation();
   });
 
-  $(morph).on('morph.changeToMissile', function () {
+  event(morph).on('morph.changeToMissile', function () {
     const tolerance = 0.75;
     var v = entity.velocity();
     if (v.length() < tolerance) {
@@ -41,7 +42,7 @@ module.exports = function (conf) {
     }
   });
 
-  $(entity).on('entity.applyForce', function (e, rotation, force) {
+  event(entity).on('entity.applyForce', function (rotation, force) {
     if (morph.isMan()) {
       if (keys.left) {
         force.x -= RUN_FORCE;
@@ -64,7 +65,7 @@ module.exports = function (conf) {
 
   });
 
-  $(entity).on('entity.applyDamping', function (e, v) {
+  event(entity).on('entity.applyDamping', function (v) {
     if (morph.isMan()) {
       v.x = v.x < 0 ? Math.max(v.x, -MAN_MAX_YSPEED) : Math.min(v.x, MAN_MAX_YSPEED);
       v.y = v.y < 0 ? Math.max(v.y, -MAN_MAX_YSPEED) : Math.min(v.y, MAN_MAX_YSPEED);

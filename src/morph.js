@@ -1,5 +1,6 @@
 module.exports = function () {
-  const easeDown = require('bezier-easing')(0, 0, 1, 1),
+  const event = require('./engine/event'),
+    easeDown = require('bezier-easing')(0, 0, 1, 1),
     easeUp = require('bezier-easing')(0.25, 0.25, 0.5, 2.5);
 
   const ttl = 7;
@@ -13,10 +14,10 @@ module.exports = function () {
   const doMorph = function () {
       if (isMan) {
         isMan = false;
-        $(morph).trigger('morph.changeToMissile');
+        event(morph).trigger('morph.changeToMissile');
       } else {
         isMan = true;
-        $(morph).trigger('morph.changeToMan');
+        event(morph).trigger('morph.changeToMan');
       }
     },
 
