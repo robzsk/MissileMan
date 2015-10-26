@@ -1,72 +1,43 @@
-module.exports = function () {
+module.exports = function (points) {
   'use strict';
 
   var rotation = new THREE.Euler(),
     velocity = new THREE.Vector2(0, 0),
     position = new THREE.Vector2(0, 0);
 
-  var detectCollision = function () {
-    var pointToPos = new THREE.Vector2(), depth, offset, distSquared, cNormal = new THREE.Vector2();
-    return function (point, nearestPointOnLine, lineNormal) {
-      pointToPos.copy(point)
-        .sub(nearestPointOnLine);
-      cNormal.copy(pointToPos).normalize();
-      if (cNormal.dot(lineNormal) >= 0) { // behind the line?
-        distSquared = pointToPos.lengthSq();
-        if (distSquared < point.rs) {
-          depth = point.r - Math.sqrt(distSquared);
-          offset = pointToPos.normalize().multiplyScalar(depth);
-          position.add(offset);
-          velocity.sub(cNormal.multiplyScalar(velocity.dot(cNormal)));
-          $(entity).trigger('entity.collision');
-        }
-      }
-    };
-  }();
+  var pointsToWorld = [];
 
-  var handleCollisions = function (points, lines) {
+  var toWorld = function () {
     var pointToWorld = new THREE.Vector3(),
       bodyToWorld = new THREE.Matrix4();
-    return function (points, lines) {
-      pointToWorld.set(position.x, position.y, 0);
-      bodyToWorld.makeRotationFromEuler(rotation) // TODO: we could do this just once per iteration
-        .setPosition(pointToWorld);
-      _.each(lines, function (l) {
-        _.each(points, function (p) {
-          pointToWorld.set(p.x, p.y, 0)
-            .applyMatrix4(bodyToWorld);
-          pointToWorld.r = p.r; // radius
-          pointToWorld.rs = p.rs; // radius squared
-          detectCollision(pointToWorld, l.nearestPoint(pointToWorld), l.n);
-        });
+    _.each(points, function (p) {
+      var pw = new THREE.Vector3();
+      pw.r = p.r;
+      pw.rs = p.rs;
+      pointsToWorld.push(pw);
+    });
+    return function () {
+      bodyToWorld.makeRotationFromEuler(rotation).setPosition(position);
+      _.each(pointsToWorld, function (p, n) {
+        p.set(points[n].x, points[n].y, 0).applyMatrix4(bodyToWorld);
       });
     };
   }();
 
-  var integrate = function () {
-    var tmp = new THREE.Vector2();
-    return function (dt, points, lines) {
-      tmp.set(0, 0);
-      entity.forces(rotation, tmp);
-      tmp.multiplyScalar(dt);
-      velocity.add(tmp);
-      entity.limitVelocity(velocity);
-      tmp.copy(velocity).multiplyScalar(dt);
-      position.add(tmp);
-      if (lines.length > 0) {
-        handleCollisions(points, lines);
-      }
-    };
-  }();
-
   var entity = {
-    update: function (dt, points, lines) {
-      integrate(dt, points, lines);
-    },
-
-    // override these
-    forces: function (r, force) {},
-    limitVelocity: function (v) {},
+    update: function () {
+      var force = new THREE.Vector2();
+      return function (dt) {
+        force.set(0, 0);
+        $(entity).trigger('entity.applyForce', [rotation, force]);
+        force.multiplyScalar(dt);
+        velocity.add(force);
+        $(entity).trigger('entity.applyDamping', [velocity]);
+        force.copy(velocity).multiplyScalar(dt);
+        position.add(force);
+        toWorld();
+      };
+    }(),
 
     reset: function (x, y) {
       position.set(x, y, 0);
@@ -100,9 +71,20 @@ module.exports = function () {
     }(),
 
     checkCollides: function () {
-      var getLines = require('./line').getBoxLines;
-      return function (points, box) {
-        handleCollisions(points, getLines(box.x, box.y));
+      var collision, found;
+      return function (lines) {
+        found = false;
+        _.each(lines, function (l) {
+          _.each(pointsToWorld, function (p) {
+            collision = l.detectCollision(p);
+            if (collision) {
+              position.add(collision.offset);
+              velocity.sub(collision.normal.multiplyScalar(velocity.dot(collision.normal)));
+              found = true;
+            }
+          });
+        });
+        return found;
       };
     }()
 

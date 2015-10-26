@@ -17,7 +17,7 @@ module.exports = function (conf) {
   'use strict';
 
   var thrust = require('./physics/thrust'),
-    entity = require('./physics/entity')(),
+    entity = require('./physics/entity')(points),
     morph = require('./morph')();
 
   var keys = {
@@ -27,23 +27,21 @@ module.exports = function (conf) {
     }
   };
 
-  morph.changeToMan = function () {
+  $(morph).on('morph.changeToMan', function () {
     entity.setRotation();
-  };
-  morph.changeToMissile = function () {
-    const tolerance = 0.75;
-    var v;
-    return function () {
-      v = entity.velocity();
-      if (v.length() < tolerance) {
-        entity.setRotation();
-      } else {
-        entity.setRotation(-Math.atan2(v.x, v.y));
-      }
-    };
-  }();
+  });
 
-  entity.forces = function (rotation, force) {
+  $(morph).on('morph.changeToMissile', function () {
+    const tolerance = 0.75;
+    var v = entity.velocity();
+    if (v.length() < tolerance) {
+      entity.setRotation();
+    } else {
+      entity.setRotation(-Math.atan2(v.x, v.y));
+    }
+  });
+
+  $(entity).on('entity.applyForce', function (e, rotation, force) {
     if (morph.isMan()) {
       if (keys.left) {
         force.x -= RUN_FORCE;
@@ -64,9 +62,9 @@ module.exports = function (conf) {
       thrust(force, rotation, MISSILE_TRUST);
     }
 
-  };
+  });
 
-  entity.limitVelocity = function (v) {
+  $(entity).on('entity.applyDamping', function (e, v) {
     if (morph.isMan()) {
       v.x = v.x < 0 ? Math.max(v.x, -MAN_MAX_YSPEED) : Math.min(v.x, MAN_MAX_YSPEED);
       v.y = v.y < 0 ? Math.max(v.y, -MAN_MAX_YSPEED) : Math.min(v.y, MAN_MAX_YSPEED);
@@ -82,21 +80,17 @@ module.exports = function (conf) {
         v.multiplyScalar(MISSILE_MAX_SPEED);
       }
     }
-
-  };
-
-  var handleMorph = function (m) {
-    if (!keys.morph && m) {
-      morph.go();
-    }
-    keys.morph = m;
-  };
+  });
 
   var handleInput = function (e, m) {
     keys.left = m.left;
     keys.right = m.right;
     keys.jump = m.jump;
-    handleMorph(m.morph);
+
+    if (!keys.morph && m.morph) {
+      morph.go();
+    }
+    keys.morph = m.morph;
   };
 
   $(conf.input).on('input.move', handleInput);
@@ -104,6 +98,7 @@ module.exports = function (conf) {
   return {
     position: entity.position,
     rotation: entity.rotation,
+
     detatchInput: function () {
       $(conf.input).off('input.move', handleInput);
     },
@@ -114,26 +109,17 @@ module.exports = function (conf) {
       entity.reset(conf.pos.x, conf.pos.y);
     },
 
-    update: function (ticks, dt, lines) {
+    update: function (ticks, dt) {
       conf.input.update(ticks);
       morph.update();
-      entity.update(dt, points, lines);
+      entity.update(dt);
     },
 
     getScale: function () {
       return morph.getScale();
     },
 
-    checkCollides: function (box) {
-      var collides = false;
-      var onCollision = function () {
-        collides = true;
-      };
-      $(entity).on('entity.collision', onCollision);
-      entity.checkCollides(points, box);
-      $(entity).off('entity.collision', onCollision);
-      return collides;
-    }
+    checkCollides: entity.checkCollides
 
   };
 };

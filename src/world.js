@@ -17,14 +17,17 @@ module.exports = function () {
 
   var world = {
     update: function (ticks, step) {
-      _.each(players, function (p) {
-        p.update(ticks, step, map.getLines(p));
+      var getLines = require('./physics/line').getBoxLines;
 
-        // TODO: this could be more efficient
-        // only need to check targets close to the player
-        // assuming a lot of targets on the map
+      _.each(players, function (p) {
+        p.update(ticks, step);
+
+        p.checkCollides(map.getLines(p));
+
+        // TODO: use a map layer instead. handle the same as a map
+        // return the coordinates of the collision and figure out which box was hit
         _.every(targets, function (t) {
-          if (p.checkCollides(t)) {
+          if (p.checkCollides(getLines(t.x, t.y))) {
             scene.remove(p.avatar);
             scene.remove(t.avatar);
             players = _.without(players, p);

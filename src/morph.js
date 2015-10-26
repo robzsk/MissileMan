@@ -13,10 +13,10 @@ module.exports = function () {
   const doMorph = function () {
       if (isMan) {
         isMan = false;
-        morph.changeToMissile();
+        $(morph).trigger('morph.changeToMissile');
       } else {
         isMan = true;
-        morph.changeToMan();
+        $(morph).trigger('morph.changeToMan');
       }
     },
 
