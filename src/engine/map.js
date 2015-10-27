@@ -7,8 +7,7 @@ module.exports = function () {
   // use the map editor for creating etc
   // for now dimensions are hard coded
   var cells = [],
-    MAP = { tw: 64, th: 48 },
-    tcell = function (tx, ty) { return cells[tx + (ty * MAP.tw)]; };
+    tcell = function (tx, ty) { return cells[ty][tx]; };
 
   return {
     clear: function () {

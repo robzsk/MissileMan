@@ -11,11 +11,7 @@ module.exports = function () {
     targets = [],
     map = mapFactory(),
     playerToWatch,
-    MAP = { tw: 64, th: 48 }, // TODO: this is also hard coded in map.js. we don't want these shenanigans
     scene = sceneFactory();
-
-  // TODO: move this somewhere else
-  var getLinesForTarget = function () {}();
 
   var world = {
     update: function (ticks, step) {
@@ -84,8 +80,9 @@ module.exports = function () {
 
       // TODO: map shenanigans...
       var x, y, cell, cube;
-      for (y = MAP.th - 1; y >= 0; y--) {
-        for (x = 0; x < MAP.tw; x++) {
+
+      for (y = blocks.length - 1; y >= 0; y--) {
+        for (x = 0; x < blocks[y].length; x++) {
           cell = map.getCell(x, y);
           if (cell === 1) {
             cube = assets.cubeSolid();
@@ -96,6 +93,7 @@ module.exports = function () {
           scene.add(cube);
         }
       }
+
     },
 
     isComplete: function () {
