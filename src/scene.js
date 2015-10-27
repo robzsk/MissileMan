@@ -1,6 +1,6 @@
 var zoom = 26;
 
-module.exports = function (canvas) {
+module.exports = function () {
   'use strict';
 
   var ret,
@@ -19,7 +19,7 @@ module.exports = function (canvas) {
 
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x3e3e3e, 1);
-  $('body').append(renderer.domElement);
+  document.body.appendChild(renderer.domElement);
 
   ret = {
     render: function () {

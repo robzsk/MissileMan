@@ -1,6 +1,8 @@
 'use strict';
 
 module.exports = function () {
+  const event = require('./engine/event');
+
   var mesh = {};
 
   const createCube = function (color) {
@@ -22,7 +24,7 @@ module.exports = function () {
       };
       var me = this;
       manager.onLoad = function () {
-        $(me).trigger('assets.loaded');
+        event(me).trigger('assets.loaded');
       };
 
       loadMesh('empty', 'empty');

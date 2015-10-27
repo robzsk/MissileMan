@@ -3,12 +3,12 @@
 
   const DEFAULT_LEVEL = 'level.json';
 
-  const event = require('./src/engine/event'),
-    overlay = require('./src/overlay'),
+  const overlay = require('./src/overlay'),
     inputFactory = require('./src/input'),
     playerFactory = require('./src/player'),
     assets = require('./src/assets'),
     world = require('./src/world'),
+    event = require('./src/engine/event'),
     loop = require('./src/engine/loop');
 
   var players = [],
@@ -56,7 +56,7 @@
     loadLevel(addPlayers);
   };
 
-  $(world).on('world.player.killed', function (e, p) {
+  event(world).on('world.player.killed', function (p) {
     if (players[currentPlayer] === p) {
       players[currentPlayer].detatchInput();
       players[currentPlayer] = playerFactory({
@@ -90,7 +90,7 @@
     }
   });
 
-  $(overlay).on('title.playbutton.click', function () {
+  event(overlay).on('title.playbutton.click', function () {
     overlay.hideTitle();
     overlay.fadeFromBlack();
 
@@ -105,7 +105,7 @@
 
   $(document).ready(function () {
     assets.load();
-    $(assets).on('assets.loaded', function () {
+    event(assets).on('assets.loaded', function () {
       overlay.fadeFromBlack();
       overlay.showTitle(overlayInput);
     });

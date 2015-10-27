@@ -83,7 +83,7 @@ module.exports = function (conf) {
     }
   });
 
-  var handleInput = function (e, m) {
+  var handleInput = function (m) {
     keys.left = m.left;
     keys.right = m.right;
     keys.jump = m.jump;
@@ -94,14 +94,14 @@ module.exports = function (conf) {
     keys.morph = m.morph;
   };
 
-  $(conf.input).on('input.move', handleInput);
+  event(conf.input).on('input.move', handleInput);
 
   return {
     position: entity.position,
     rotation: entity.rotation,
 
     detatchInput: function () {
-      $(conf.input).off('input.move', handleInput);
+      event(conf.input).off('input.move', handleInput);
     },
 
     reset: function () {

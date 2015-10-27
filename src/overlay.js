@@ -1,6 +1,7 @@
 module.exports = function () {
   'use strict';
 
+  const event = require('./engine/event');
   var overlay, input;
 
   var fader = function () {
@@ -26,16 +27,17 @@ module.exports = function () {
         left: '50%'
       })
       .click(function () {
-        $(overlay).trigger('title.playbutton.click');
+        event(overlay).trigger('title.playbutton.click');
       })
       .text('Play');
     $('body').append(b);
     return b;
   }();
 
-  var onInput = function (e, m) {
+  var onInput = function (m) {
     if (m.select) {
-      $(overlay).trigger('title.playbutton.click');
+      event(overlay).trigger('title.playbutton.click');
+      event(input).off('input.move', onInput);
     }
   };
 
@@ -49,13 +51,12 @@ module.exports = function () {
       button.stop()
         .animate({bottom: '100px'}, 600, 'easeOutBack');
       input = i;
-      $(input).on('input.move', onInput);
+      event(input).on('input.move', onInput);
     },
 
     hideTitle: function () {
       button.stop()
         .animate({bottom: '-100px'}, 400, 'easeInBack');
-      $(input).off('input.move', onInput);
     }
 
   };

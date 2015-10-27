@@ -1,12 +1,14 @@
 'use strict';
 
+const event = require('./engine/event');
+
 const replayInput = function (file) {
   var moves = JSON.parse(file);
   return {
     update: function (tick) {
       var m = moves['_' + tick];
       if (m) {
-        $(this).trigger('input.move', _.clone(m));
+        event(this).trigger('input.move', [_.clone(m)]);
       }
     }
   };
@@ -26,8 +28,8 @@ const keyboardInput = function (keys) {
     });
   };
 
-  $(document).keydown(function (ev) { return onkey(ev, ev.keyCode, true); });
-  $(document).keyup(function (ev) { return onkey(ev, ev.keyCode, false); });
+  document.body.addEventListener('keydown', function (ev) { return onkey(ev, ev.keyCode, true); });
+  document.body.addEventListener('keyup', function (ev) { return onkey(ev, ev.keyCode, false); });
 
   return {
     reset: function () {
@@ -41,7 +43,7 @@ const keyboardInput = function (keys) {
     update: function (tick) {
       if (!_.isMatch(current, prev)) {
         moves['_' + tick] = _.clone(current);
-        $(this).trigger('input.move', _.clone(current));
+        event(this).trigger('input.move', [_.clone(current)]);
         _.extend(prev, current); // copy
       }
     }

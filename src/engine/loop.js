@@ -10,7 +10,7 @@ module.exports = function () {
       s.domElement.style.position = 'absolute';
       s.domElement.style.left = '0px';
       s.domElement.style.top = '0px';
-      $('body').append(s.domElement);
+      document.body.appendChild(s.domElement);
     }
     return s;
   }();

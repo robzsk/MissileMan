@@ -3,6 +3,7 @@ module.exports = function () {
 
   const assets = require('./assets'),
     sceneFactory = require('./scene'),
+    event = require('./engine/event'),
     mapFactory = require('./engine/map'),
     getLines = require('./engine/line').getBoxLines;
 
@@ -11,7 +12,7 @@ module.exports = function () {
     map = mapFactory(),
     playerToWatch,
     MAP = { tw: 64, th: 48 }, // TODO: this is also hard coded in map.js. we don't want these shenanigans
-    scene = sceneFactory($('#canvas'));
+    scene = sceneFactory();
 
   // TODO: move this somewhere else
   var getLinesForTarget = function () {}();
@@ -31,7 +32,7 @@ module.exports = function () {
             scene.remove(t.avatar);
             players = _.without(players, p);
             targets = _.without(targets, t);
-            $(world).trigger('world.player.killed', p);
+            event(world).trigger('world.player.killed', [p]);
             return false;
           }
           return true;
