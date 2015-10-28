@@ -1,8 +1,12 @@
-module.exports = function () {
-  'use strict';
+'use strict';
 
-  const event = require('./engine/event');
-  var overlay, input;
+var util = require('util'),
+  EventEmitter = require('events').EventEmitter;
+
+var Overlay = function () {
+  var input, self = this;
+
+  EventEmitter.call(this);
 
   var fader = function () {
     var f = $('<div/>')
@@ -27,7 +31,7 @@ module.exports = function () {
         left: '50%'
       })
       .click(function () {
-        event(overlay).trigger('title.playbutton.click');
+        self.emit('title.playbutton.click');
       })
       .text('Play');
     $('body').append(b);
@@ -36,29 +40,30 @@ module.exports = function () {
 
   var onInput = function (m) {
     if (m.select) {
-      event(overlay).trigger('title.playbutton.click');
-      event(input).off('input.move', onInput);
+      self.emit('title.playbutton.click');
+      input.removeListener('input.move', onInput);
     }
   };
 
-  overlay = {
-    fadeFromBlack: function () {
-      fader.css({opacity: 1});
-      fader.stop().animate({opacity: 0}, 600);
-    },
-
-    showTitle: function (i) {
-      button.stop()
-        .animate({bottom: '100px'}, 600, 'easeOutBack');
-      input = i;
-      event(input).on('input.move', onInput);
-    },
-
-    hideTitle: function () {
-      button.stop()
-        .animate({bottom: '-100px'}, 400, 'easeInBack');
-    }
-
+  this.fadeFromBlack = function () {
+    fader.css({opacity: 1});
+    fader.stop().animate({opacity: 0}, 600);
   };
-  return overlay;
-}();
+
+  this.showTitle = function (i) {
+    button.stop()
+      .animate({bottom: '100px'}, 600, 'easeOutBack');
+    input = i;
+    input.on('input.move', onInput);
+  };
+
+  this.hideTitle = function () {
+    button.stop()
+      .animate({bottom: '-100px'}, 400, 'easeInBack');
+  };
+
+};
+
+util.inherits(Overlay, EventEmitter);
+
+module.exports = Overlay;

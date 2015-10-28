@@ -1,3 +1,5 @@
+'use strict';
+
 const MISSILE_MAX_SPEED = 10.0,
   MISSILE_TORQUE = 5 * (Math.PI / 180),
   MISSILE_TRUST = new THREE.Vector3(0, 50.0, 0),
@@ -13,13 +15,15 @@ const points = [
   { x: 0, y: -0.175, z: 0, r: RADIUS, rs: RADIUS * RADIUS }
 ];
 
-module.exports = function (conf) {
+var Player = function (conf) {
   'use strict';
 
-  var event = require('./engine/event'),
-    thrust = require('./engine/thrust'),
-    entity = require('./engine/entity')(points),
-    morph = require('./morph')();
+  var thrust = require('./engine/thrust'),
+    Entity = require('./engine/entity'),
+    Morph = require('./morph'),
+
+    entity = new Entity(points),
+    morph = new Morph();
 
   var keys = {
     left: false, right: false, jump: false, morph: false,
@@ -28,11 +32,11 @@ module.exports = function (conf) {
     }
   };
 
-  event(morph).on('morph.changeToMan', function () {
+  morph.on('morph.changeToMan', function () {
     entity.setRotation();
   });
 
-  event(morph).on('morph.changeToMissile', function () {
+  morph.on('morph.changeToMissile', function () {
     const tolerance = 0.75;
     var v = entity.velocity();
     if (v.length() < tolerance) {
@@ -42,7 +46,7 @@ module.exports = function (conf) {
     }
   });
 
-  event(entity).on('entity.applyForce', function (rotation, force) {
+  entity.on('entity.applyForce', function (rotation, force) {
     if (morph.isMan()) {
       if (keys.left) {
         force.x -= RUN_FORCE;
@@ -65,7 +69,7 @@ module.exports = function (conf) {
 
   });
 
-  event(entity).on('entity.applyDamping', function (v) {
+  entity.on('entity.applyDamping', function (v) {
     if (morph.isMan()) {
       v.x = v.x < 0 ? Math.max(v.x, -MAN_MAX_YSPEED) : Math.min(v.x, MAN_MAX_YSPEED);
       v.y = v.y < 0 ? Math.max(v.y, -MAN_MAX_YSPEED) : Math.min(v.y, MAN_MAX_YSPEED);
@@ -94,33 +98,33 @@ module.exports = function (conf) {
     keys.morph = m.morph;
   };
 
-  event(conf.input).on('input.move', handleInput);
+  conf.input.on('input.move', handleInput);
 
-  return {
-    position: entity.position,
-    rotation: entity.rotation,
+  this.position = entity.position;
+  this.rotation = entity.rotation;
 
-    detatchInput: function () {
-      event(conf.input).off('input.move', handleInput);
-    },
-
-    reset: function () {
-      morph.reset();
-      keys.reset();
-      entity.reset(conf.pos.x, conf.pos.y);
-    },
-
-    update: function (ticks, dt) {
-      conf.input.update(ticks);
-      morph.update();
-      entity.update(dt);
-    },
-
-    getScale: function () {
-      return morph.getScale();
-    },
-
-    checkCollides: entity.checkCollides
-
+  this.detatchInput = function () {
+    conf.input.removeListener('input.move', handleInput);
   };
+
+  this.reset = function () {
+    morph.reset();
+    keys.reset();
+    entity.reset(conf.pos.x, conf.pos.y);
+  };
+
+  this.update = function (ticks, dt) {
+    conf.input.update(ticks);
+    morph.update();
+    entity.update(dt);
+  };
+
+  this.getScale = function () {
+    return morph.getScale();
+  };
+
+  this.checkCollides = entity.checkCollides;
+
 };
+
+module.exports = Player;

@@ -1,6 +1,9 @@
+'use strict';
+
+var util = require('util'),
+  EventEmitter = require('events').EventEmitter;
+
 module.exports = function () {
-  'use strict';
-  const event = require('./event');
   const stats = function () {
     var s = {begin: function () {},end: function () {}};
 
@@ -15,7 +18,7 @@ module.exports = function () {
     return s;
   }();
 
-  const timestamp = function () {
+  var timestamp = function () {
     return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
   };
 
@@ -27,22 +30,26 @@ module.exports = function () {
     last = timestamp(),
     ticks = 0;
 
+  var Loop = function () {
+    EventEmitter.call(this);
+    this.reset = function () {
+      ticks = 0;
+    };
+  };
+  util.inherits(Loop, EventEmitter);
+  loop = new Loop();
+
   +function run () {
     requestAnimationFrame(run);
     stats.begin();
     now = timestamp();
     dt = now - last;
     last = now;
-    event(loop).trigger('loop.update', [ticks, step]);
-    event(loop).trigger('loop.render', [dt]);
+    loop.emit('loop.update', ticks, step);
+    loop.emit('loop.render', dt);
     ticks += 1;
     stats.end();
   }();
 
-  loop = {
-    reset: function () {
-      ticks = 0;
-    }
-  };
   return loop;
 }();

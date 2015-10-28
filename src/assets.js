@@ -1,8 +1,9 @@
 'use strict';
 
-module.exports = function () {
-  const event = require('./engine/event');
+var util = require('util'),
+  EventEmitter = require('events').EventEmitter;
 
+module.exports = function () {
   var mesh = {};
 
   const createCube = function (color) {
@@ -12,8 +13,11 @@ module.exports = function () {
     return cube;
   };
 
-  return {
-    load: function () {
+  var Assets = function () {
+    var self = this;
+    EventEmitter.call(this);
+
+    this.load = function () {
       var manager = new THREE.LoadingManager(),
         loader = new THREE.JSONLoader(manager);
       var loadMesh = function (name, mf, color) {
@@ -22,33 +26,35 @@ module.exports = function () {
             new THREE.MeshDepthMaterial() : new THREE.MeshBasicMaterial({ color: color }));
         });
       };
-      var me = this;
       manager.onLoad = function () {
-        event(me).trigger('assets.loaded');
+        self.emit('assets.loaded');
       };
 
       loadMesh('empty', 'empty');
       loadMesh('solid', 'solid');
       loadMesh('target', 'solid', 0xac4442);
       loadMesh('player', 'player', 0x0179d5);
-    },
+    };
 
     // TODO: rename these or group them...
-    cubeEmpty: function (n) {
+    this.cubeEmpty = function (n) {
       return mesh['empty'].clone();
-    },
+    };
 
-    cubeSolid: function () {
+    this.cubeSolid = function () {
       return mesh['solid'].clone();
-    },
+    };
 
-    cubeTarget: function () {
+    this.cubeTarget = function () {
       return mesh['target'].clone();
-    },
+    };
 
-    cubePlayer: function () {
+    this.cubePlayer = function () {
       return mesh['player'].clone();
-    }
-
+    };
   };
+
+  util.inherits(Assets, EventEmitter);
+
+  return new Assets();
 }();

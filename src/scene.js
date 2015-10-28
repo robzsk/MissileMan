@@ -1,10 +1,9 @@
-var zoom = 26;
+'use strict';
 
-module.exports = function () {
-  'use strict';
+const zoom = 26;
 
-  var ret,
-    scene = new THREE.Scene(),
+var Scene = function () {
+  var scene = new THREE.Scene(),
     cam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, zoom - 9, zoom),
     // dlight = new THREE.DirectionalLight(0xffffff, 1),
     alight = new THREE.AmbientLight(0xffffff),
@@ -21,30 +20,30 @@ module.exports = function () {
   renderer.setClearColor(0x3e3e3e, 1);
   document.body.appendChild(renderer.domElement);
 
-  ret = {
-    render: function () {
-      renderer.render(scene, cam);
-    },
 
-    add: function (m) {
-      scene.add(m);
-    },
-
-    follow: function (p) {
-      cam.position.set(p.x, p.y, zoom);
-    },
-
-    remove: function (m) {
-      scene.remove(m);
-    },
-
-    clear: function () {
-      var children = _.clone(scene.children);
-      _.each(children, function (child) {
-        scene.remove(child);
-      });
-    }
-
+  this.render = function () {
+    renderer.render(scene, cam);
   };
-  return ret;
+
+  this.add = function (m) {
+    scene.add(m);
+  };
+
+  this.follow = function (p) {
+    cam.position.set(p.x, p.y, zoom);
+  };
+
+  this.remove = function (m) {
+    scene.remove(m);
+  };
+
+  this.clear = function () {
+    var children = _.clone(scene.children);
+    _.each(children, function (child) {
+      scene.remove(child);
+    });
+  };
+
 };
+
+module.exports = Scene;

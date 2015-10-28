@@ -1,105 +1,108 @@
-module.exports = function () {
-  'use strict';
+'use strict';
 
+var util = require('util'),
+  EventEmitter = require('events').EventEmitter;
+
+var World = function () {
   const assets = require('./assets'),
-    sceneFactory = require('./scene'),
-    event = require('./engine/event'),
-    mapFactory = require('./engine/map'),
+    Scene = require('./scene'),
+    Map = require('./engine/map'),
     getLines = require('./engine/line').getBoxLines;
 
-  var players = [],
+  var self = this,
+    scene = new Scene(),
+    map = new Map(),
+    players = [],
     targets = [],
-    map = mapFactory(),
-    playerToWatch,
-    scene = sceneFactory();
+    playerToWatch;
 
-  var world = {
-    update: function (ticks, step) {
-      _.each(players, function (p) {
-        p.update(ticks, step);
+  EventEmitter.call(this);
 
-        p.checkCollides(map.getLines(p));
+  this.update = function (ticks, step) {
+    _.each(players, function (p) {
+      p.update(ticks, step);
 
-        // TODO: use a map layer instead. handle the same as a map
-        // return the coordinates of the collision and figure out which box was hit
-        _.every(targets, function (t) {
-          if (p.checkCollides(getLines(t.x, t.y))) {
-            scene.remove(p.avatar);
-            scene.remove(t.avatar);
-            players = _.without(players, p);
-            targets = _.without(targets, t);
-            event(world).trigger('world.player.killed', [p]);
-            return false;
-          }
-          return true;
-        });
+      p.checkCollides(map.getLines(p));
 
-      });
-    },
-
-    render: function (dt) {
-      _.each(players, function (p) {
-        p.avatar.rotation.x = p.avatar.rotation.y = p.avatar.rotation.z = 0;
-        p.avatar.rotation.z = p.rotation().z;
-        p.avatar.position.copy(p.position());
-        p.avatar.scale.set(p.getScale(), p.getScale(), p.getScale());
-      });
-
-      if (playerToWatch) {
-        scene.follow(playerToWatch.position);
-      }
-      scene.render();
-    },
-
-    clear: function () {
-      players = [];
-      targets = [];
-      map.clear();
-      scene.clear();
-    },
-
-    addTarget: function (target) {
-      var cube = assets.cubeTarget();
-      targets.push(target);
-      target.avatar = cube;
-      cube.position.set(target.x, target.y, 0);
-      scene.add(cube);
-    },
-
-    addPlayer: function (player, watch) {
-      players.push(player);
-      player.avatar = assets.cubePlayer();
-      scene.add(player.avatar);
-      if (watch) {
-        playerToWatch = player.avatar;
-      }
-    },
-
-    addBlocks: function (blocks) {
-      map.addBlocks(blocks);
-
-      // TODO: map shenanigans...
-      var x, y, cell, cube;
-
-      for (y = blocks.length - 1; y >= 0; y--) {
-        for (x = 0; x < blocks[y].length; x++) {
-          cell = map.getCell(x, y);
-          if (cell === 1) {
-            cube = assets.cubeSolid();
-          } else {
-            cube = assets.cubeEmpty();
-          }
-          cube.position.set(x, y, 0);
-          scene.add(cube);
+      // TODO: use a map layer instead. handle the same as a map
+      // return the coordinates of the collision and figure out which box was hit
+      _.every(targets, function (t) {
+        if (p.checkCollides(getLines(t.x, t.y))) {
+          scene.remove(p.avatar);
+          scene.remove(t.avatar);
+          players = _.without(players, p);
+          targets = _.without(targets, t);
+          self.emit('world.player.killed', p);
+          return false;
         }
-      }
+        return true;
+      });
 
-    },
+    });
+  };
 
-    isComplete: function () {
-      return targets.length <= 0;
+  this.render = function (dt) {
+    _.each(players, function (p) {
+      p.avatar.rotation.x = p.avatar.rotation.y = p.avatar.rotation.z = 0;
+      p.avatar.rotation.z = p.rotation().z;
+      p.avatar.position.copy(p.position());
+      p.avatar.scale.set(p.getScale(), p.getScale(), p.getScale());
+    });
+
+    if (playerToWatch) {
+      scene.follow(playerToWatch.position);
     }
+    scene.render();
+  };
+
+  this.clear = function () {
+    players = [];
+    targets = [];
+    map.clear();
+    scene.clear();
+  };
+
+  this.addTarget = function (target) {
+    var cube = assets.cubeTarget();
+    targets.push(target);
+    target.avatar = cube;
+    cube.position.set(target.x, target.y, 0);
+    scene.add(cube);
+  };
+
+  this.addPlayer = function (player, watch) {
+    players.push(player);
+    player.avatar = assets.cubePlayer();
+    scene.add(player.avatar);
+    if (watch) {
+      playerToWatch = player.avatar;
+    }
+  };
+
+  this.addBlocks = function (blocks) {
+    map.addBlocks(blocks);
+
+    _.each(blocks, function (row, y) {
+      _.each(row, function (cell, x) {
+        var cube;
+        if (cell === 1) {
+          cube = assets.cubeSolid();
+        } else {
+          cube = assets.cubeEmpty();
+        }
+        cube.position.set(x, y, 0);
+        scene.add(cube);
+      });
+    });
 
   };
-  return world;
-}();
+
+  this.isComplete = function () {
+    return targets.length <= 0;
+  };
+
+};
+
+util.inherits(World, EventEmitter);
+
+module.exports = World;

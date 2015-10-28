@@ -3,19 +3,20 @@
 
   const DEFAULT_LEVEL = 'level.json';
 
-  const overlay = require('./src/overlay'),
-    inputFactory = require('./src/input'),
-    playerFactory = require('./src/player'),
+  const Overlay = require('./src/overlay'),
+    Input = require('./src/input'),
+    Player = require('./src/player'),
+    World = require('./src/world'),
     assets = require('./src/assets'),
-    world = require('./src/world'),
-    event = require('./src/engine/event'),
     loop = require('./src/engine/loop');
 
-  var players = [],
+  var overlay = new Overlay(),
+    world = new World(),
+    players = [],
     spawnPoints = [],
     currentPlayer = 0,
-    playerInput = inputFactory({ keys: { left: 37, right: 39, jump: 38, morph: 67 } }),
-    overlayInput = inputFactory({ keys: { up: 38, down: 40, select: 13 } });
+    playerInput = new Input({ keys: { left: 37, right: 39, jump: 38, morph: 67 } }),
+    overlayInput = new Input({ keys: { up: 38, down: 40, select: 13 } });
 
   const setup = function (map) {
     spawnPoints = map.spawnPoints;
@@ -39,7 +40,7 @@
     };
     const addPlayers = function () {
       if (players.length === 0) {
-        players[currentPlayer] = playerFactory({
+        players[currentPlayer] = new Player({
           input: playerInput,
           pos: spawnPoints[currentPlayer]
         });
@@ -56,11 +57,11 @@
     loadLevel(addPlayers);
   };
 
-  event(world).on('world.player.killed', function (p) {
+  world.on('world.player.killed', function (p) {
     if (players[currentPlayer] === p) {
       players[currentPlayer].detatchInput();
-      players[currentPlayer] = playerFactory({
-        input: inputFactory({replay: playerInput.serialize()}),
+      players[currentPlayer] = new Player({
+        input: new Input({replay: playerInput.serialize()}),
         pos: spawnPoints[currentPlayer]
       });
 
@@ -73,7 +74,7 @@
       if (players[currentPlayer]) {
         players[currentPlayer].detatchInput();
       }
-      players[currentPlayer] = playerFactory({
+      players[currentPlayer] = new Player({
         input: playerInput,
         pos: spawnPoints[currentPlayer]
       });
@@ -90,7 +91,7 @@
     }
   });
 
-  event(overlay).on('title.playbutton.click', function () {
+  overlay.on('title.playbutton.click', function () {
     overlay.hideTitle();
     overlay.fadeFromBlack();
 
@@ -105,18 +106,18 @@
 
   $(document).ready(function () {
     assets.load();
-    event(assets).on('assets.loaded', function () {
+    assets.on('assets.loaded', function () {
       overlay.fadeFromBlack();
       overlay.showTitle(overlayInput);
     });
   });
 
-  event(loop).on('loop.update', function (ticks, step) {
+  loop.on('loop.update', function (ticks, step) {
     overlayInput.update(ticks);
     world.update(ticks, step);
   });
 
-  event(loop).on('loop.render', function (dt) {
+  loop.on('loop.render', function (dt) {
     world.render(dt);
   });
 

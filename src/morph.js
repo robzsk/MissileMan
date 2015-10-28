@@ -1,78 +1,83 @@
-module.exports = function () {
-  const event = require('./engine/event'),
-    easeDown = require('bezier-easing')(0, 0, 1, 1),
-    easeUp = require('bezier-easing')(0.25, 0.25, 0.5, 2.5);
+'use strict';
+
+var util = require('util'),
+  EventEmitter = require('events').EventEmitter,
+  easing = require('bezier-easing');
+
+var Morph = function () {
+  EventEmitter.call(this);
 
   const ttl = 7;
 
-  var n = 0,
+  var self = this,
+    easeDown = easing(0, 0, 1, 1),
+    easeUp = easing(0.25, 0.25, 0.5, 2.5),
+    n = 0,
     scale = 1,
     down = false,
     up = false,
     isMan = true;
 
-  const doMorph = function () {
-      if (isMan) {
-        isMan = false;
-        event(morph).trigger('morph.changeToMissile');
-      } else {
-        isMan = true;
-        event(morph).trigger('morph.changeToMan');
-      }
-    },
-
-    canMorph = function () {
-      return !down && !up;
-    };
-
-  const morph = {
-    reset: function () {
-      scale = 1;
-      n = 0;
+  var doMorph = function () {
+    if (isMan) {
+      isMan = false;
+      self.emit('morph.changeToMissile');
+    } else {
       isMan = true;
-      up = down = false;
-    },
-    // override these
-    changeToMan: function () {},
-    changeToMissile: function () {},
+      self.emit('morph.changeToMan');
+    }
+  };
 
-    isMan: function () {
-      return isMan;
-    },
+  var canMorph = function () {
+    return !down && !up;
+  };
 
-    getScale: function () {
-      // if scale is zero three.js throws
-      // Matrix3.getInverse(): can't invert matrix, determinant is 0
-      return scale || 0.00001;
-    },
+  this.reset = function () {
+    scale = 1;
+    n = 0;
+    isMan = true;
+    up = down = false;
+  };
 
-    go: function () {
-      if (canMorph()) {
-        down = true;
+  this.isMan = function () {
+    return isMan;
+  };
+
+  this.getScale = function () {
+    // if scale is zero three.js throws
+    // Matrix3.getInverse(): can't invert matrix, determinant is 0
+    return scale || 0.00001;
+  };
+
+  this.go = function () {
+    if (canMorph()) {
+      down = true;
+    }
+  };
+
+  this.update = function () {
+    if (down) {
+      scale = easeDown.get(n / ttl);
+      n -= 1;
+      if (n < 0) {
+        down = false;
+        up = true;
+        n = 0;
+        doMorph();
       }
-    },
-
-    update: function () {
-      if (down) {
-        scale = easeDown.get(n / ttl);
-        n -= 1;
-        if (n < 0) {
-          down = false;
-          up = true;
-          n = 0;
-          doMorph();
-        }
-      }
-      if (up) {
-        scale = easeUp.get(n / ttl);
-        n += 1;
-        if (n > ttl) {
-          up = false;
-          n = ttl;
-        }
+    }
+    if (up) {
+      scale = easeUp.get(n / ttl);
+      n += 1;
+      if (n > ttl) {
+        up = false;
+        n = ttl;
       }
     }
   };
 
-  return morph;
 };
+
+util.inherits(Morph, EventEmitter);
+
+module.exports = Morph;
