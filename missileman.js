@@ -3,7 +3,8 @@
 
   const DEFAULT_LEVEL = 'level.json';
 
-  const Overlay = require('./src/overlay'),
+  const _ = require('underscore'),
+    Overlay = require('./src/overlay'),
     Input = require('./src/input'),
     Player = require('./src/player'),
     World = require('./src/world'),

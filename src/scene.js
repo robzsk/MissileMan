@@ -1,5 +1,7 @@
 'use strict';
 
+var _ = require('underscore');
+
 const zoom = 26;
 
 var Scene = function () {
@@ -19,7 +21,6 @@ var Scene = function () {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x3e3e3e, 1);
   document.body.appendChild(renderer.domElement);
-
 
   this.render = function () {
     renderer.render(scene, cam);

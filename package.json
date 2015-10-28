@@ -5,11 +5,12 @@
   "main": "index.js",
   "dependencies": {
     "bezier-easing": "^1.1.1",
-    "electron-connect": "^0.3.3",
-    "electron-prebuilt": "^0.33.2",
-    "gulp": "^3.9.0"
+    "underscore": "^1.8.3"
   },
   "devDependencies": {
+    "electron-connect": "^0.3.3",
+    "electron-prebuilt": "^0.33.2",
+    "gulp": "^3.9.0",
     "browserify": "^11.2.0",
     "gulp-uglify": "^1.4.1",
     "vinyl-buffer": "^1.0.0",

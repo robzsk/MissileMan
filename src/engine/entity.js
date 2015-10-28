@@ -1,6 +1,7 @@
 'use strict';
 
-var util = require('util'),
+var _ = require('underscore'),
+  util = require('util'),
   EventEmitter = require('events').EventEmitter;
 
 var Entity = function (points) {
