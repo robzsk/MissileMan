@@ -1,12 +1,8 @@
 'use strict';
 
-var _ = require('underscore'),
-  util = require('util'),
-  EventEmitter = require('events').EventEmitter;
+var _ = require('underscore');
 
 var Entity = function (points) {
-  EventEmitter.call(this);
-
   var rotation = new THREE.Euler(),
     velocity = new THREE.Vector2(0, 0),
     position = new THREE.Vector2(0, 0);
@@ -32,12 +28,12 @@ var Entity = function (points) {
 
   this.update = function () {
     var force = new THREE.Vector2();
-    return function (dt) {
+    return function (dt, applyForce, applyDamping) {
       force.set(0, 0);
-      this.emit('entity.applyForce', rotation, force);
+      applyForce(rotation, force);
       force.multiplyScalar(dt);
       velocity.add(force);
-      this.emit('entity.applyDamping', velocity);
+      applyDamping(velocity);
       force.copy(velocity).multiplyScalar(dt);
       position.add(force);
       toWorld();
@@ -75,25 +71,14 @@ var Entity = function (points) {
     };
   }();
 
-  this.checkCollides = function () {
-    var collision, found;
-    return function (lines) {
-      found = false;
-      _.each(lines, function (l) {
-        _.each(pointsToWorld, function (p) {
-          collision = l.detectCollision(p);
-          if (collision) {
-            position.add(collision.offset);
-            velocity.sub(collision.normal.multiplyScalar(velocity.dot(collision.normal)));
-            found = true;
-          }
-        });
-      });
-      return found;
-    };
-  }();
-};
+  this.getPoints = function () {
+    return pointsToWorld;
+  };
 
-util.inherits(Entity, EventEmitter);
+  this.handleCollision = function (collision) {
+    position.add(collision.offset);
+    velocity.sub(collision.normal.multiplyScalar(velocity.dot(collision.normal)));
+  };
+};
 
 module.exports = Entity;

@@ -1,4 +1,7 @@
 'use strict';
+var thrust = require('./engine/thrust'),
+  Entity = require('./engine/entity'),
+  Morph = require('./morph');
 
 const MISSILE_MAX_SPEED = 10.0,
   MISSILE_TORQUE = 5 * (Math.PI / 180),
@@ -18,12 +21,7 @@ const points = [
 var Player = function (conf) {
   'use strict';
 
-  var thrust = require('./engine/thrust'),
-    Entity = require('./engine/entity'),
-    Morph = require('./morph'),
-
-    entity = new Entity(points),
-    morph = new Morph();
+  var entity = new Entity(points);
 
   var keys = {
     left: false, right: false, jump: false, morph: false,
@@ -32,11 +30,11 @@ var Player = function (conf) {
     }
   };
 
-  morph.on('morph.changeToMan', function () {
+  var changeToMan = function () {
     entity.setRotation();
-  });
+  };
 
-  morph.on('morph.changeToMissile', function () {
+  var changeToMissile = function () {
     const tolerance = 0.75;
     var v = entity.velocity();
     if (v.length() < tolerance) {
@@ -44,9 +42,11 @@ var Player = function (conf) {
     } else {
       entity.setRotation(-Math.atan2(v.x, v.y));
     }
-  });
+  };
 
-  entity.on('entity.applyForce', function (rotation, force) {
+  var morph = new Morph(changeToMan, changeToMissile);
+
+  var applyForce = function (rotation, force) {
     if (morph.isMan()) {
       if (keys.left) {
         force.x -= RUN_FORCE;
@@ -67,9 +67,9 @@ var Player = function (conf) {
       thrust(force, rotation, MISSILE_TRUST);
     }
 
-  });
+  };
 
-  entity.on('entity.applyDamping', function (v) {
+  var applyDamping = function (v) {
     if (morph.isMan()) {
       v.x = v.x < 0 ? Math.max(v.x, -MAN_MAX_YSPEED) : Math.min(v.x, MAN_MAX_YSPEED);
       v.y = v.y < 0 ? Math.max(v.y, -MAN_MAX_YSPEED) : Math.min(v.y, MAN_MAX_YSPEED);
@@ -85,7 +85,7 @@ var Player = function (conf) {
         v.multiplyScalar(MISSILE_MAX_SPEED);
       }
     }
-  });
+  };
 
   var handleInput = function (m) {
     keys.left = m.left;
@@ -100,9 +100,6 @@ var Player = function (conf) {
 
   conf.input.on('input.move', handleInput);
 
-  this.position = entity.position;
-  this.rotation = entity.rotation;
-
   this.detatchInput = function () {
     conf.input.removeListener('input.move', handleInput);
   };
@@ -116,14 +113,17 @@ var Player = function (conf) {
   this.update = function (ticks, dt) {
     conf.input.update(ticks);
     morph.update();
-    entity.update(dt);
+    entity.update(dt, applyForce, applyDamping);
   };
 
   this.getScale = function () {
     return morph.getScale();
   };
 
-  this.checkCollides = entity.checkCollides;
+  this.position = entity.position;
+  this.rotation = entity.rotation;
+  this.getPoints = entity.getPoints;
+  this.handleCollision = entity.handleCollision;
 
 };
 

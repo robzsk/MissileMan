@@ -21,10 +21,6 @@
 
   const setup = function (map) {
     spawnPoints = map.spawnPoints;
-    _.each(map.targets, function (t) {
-      world.addTarget(t);
-    });
-
     world.addBlocks(map.cells);
   };
 

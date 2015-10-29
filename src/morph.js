@@ -1,16 +1,11 @@
 'use strict';
 
-var util = require('util'),
-  EventEmitter = require('events').EventEmitter,
-  easing = require('bezier-easing');
+var easing = require('bezier-easing');
 
-var Morph = function () {
-  EventEmitter.call(this);
-
+var Morph = function (changeToMan, changeToMissile) {
   const ttl = 7;
 
-  var self = this,
-    easeDown = easing(0, 0, 1, 1),
+  var easeDown = easing(0, 0, 1, 1),
     easeUp = easing(0.25, 0.25, 0.5, 2.5),
     n = 0,
     scale = 1,
@@ -21,10 +16,10 @@ var Morph = function () {
   var doMorph = function () {
     if (isMan) {
       isMan = false;
-      self.emit('morph.changeToMissile');
+      changeToMissile();
     } else {
       isMan = true;
-      self.emit('morph.changeToMan');
+      changeToMan();
     }
   };
 
@@ -77,7 +72,5 @@ var Morph = function () {
   };
 
 };
-
-util.inherits(Morph, EventEmitter);
 
 module.exports = Morph;

@@ -8,7 +8,7 @@ var World = function () {
   const assets = require('./assets'),
     Scene = require('./scene'),
     Map = require('./engine/map'),
-    getLines = require('./engine/line').getBoxLines;
+    Line = require('./engine/line');
 
   var self = this,
     scene = new Scene(),
@@ -19,26 +19,28 @@ var World = function () {
 
   EventEmitter.call(this);
 
+  var handleCollision = function (player, collision, type) {
+    player.handleCollision(collision);
+
+    if (type === 2) {
+      scene.remove(player.avatar);
+      players = _.without(players, player); // TODO: use a dead flag instead
+      _.each(targets, function (t) {
+        // if (t.position.x === c.cell.x && t.position.y === c.cell.y) {
+        //   scene.remove(t);
+        // }
+      });
+
+      self.emit('world.player.killed', player);
+    }
+
+  };
+
   this.update = function (ticks, step) {
     _.each(players, function (p) {
       p.update(ticks, step);
-
-      p.checkCollides(map.getLines(p));
-
-      // TODO: use a map layer instead. handle the same as a map
-      // return the coordinates of the collision and figure out which box was hit
-      _.every(targets, function (t) {
-        if (p.checkCollides(getLines(t.x, t.y))) {
-          scene.remove(p.avatar);
-          scene.remove(t.avatar);
-          players = _.without(players, p);
-          targets = _.without(targets, t);
-          self.emit('world.player.killed', p);
-          return false;
-        }
-        return true;
-      });
-
+      map.checkCollides(p, 1, handleCollision);
+      map.checkCollides(p, 2, handleCollision);
     });
   };
 
@@ -63,14 +65,6 @@ var World = function () {
     scene.clear();
   };
 
-  this.addTarget = function (target) {
-    var cube = assets.cubeTarget();
-    targets.push(target);
-    target.avatar = cube;
-    cube.position.set(target.x, target.y, 0);
-    scene.add(cube);
-  };
-
   this.addPlayer = function (player, watch) {
     players.push(player);
     player.avatar = assets.cubePlayer();
@@ -88,6 +82,9 @@ var World = function () {
         var cube;
         if (cell === 1) {
           cube = assets.cubeSolid();
+        } else if (cell === 2) {
+          cube = assets.cubeTarget();
+          targets.push(cube);
         } else {
           cube = assets.cubeEmpty();
         }
@@ -99,7 +96,7 @@ var World = function () {
   };
 
   this.isComplete = function () {
-    return targets.length <= 0;
+    return false;
   };
 
 };
