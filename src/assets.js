@@ -1,8 +1,5 @@
 'use strict';
 
-var util = require('util'),
-  EventEmitter = require('events').EventEmitter;
-
 module.exports = function () {
   var mesh = {};
 
@@ -14,10 +11,7 @@ module.exports = function () {
   };
 
   var Assets = function () {
-    var self = this;
-    EventEmitter.call(this);
-
-    this.load = function () {
+    this.load = function (onloaded) {
       var manager = new THREE.LoadingManager(),
         loader = new THREE.JSONLoader(manager);
       var loadMesh = function (name, mf, color) {
@@ -27,7 +21,7 @@ module.exports = function () {
         });
       };
       manager.onLoad = function () {
-        self.emit('assets.loaded');
+        onloaded();
       };
 
       loadMesh('empty', 'empty');
@@ -53,8 +47,6 @@ module.exports = function () {
       return mesh['player'].clone();
     };
   };
-
-  util.inherits(Assets, EventEmitter);
 
   return new Assets();
 }();

@@ -102,8 +102,7 @@
   });
 
   $(document).ready(function () {
-    assets.load();
-    assets.on('assets.loaded', function () {
+    assets.load(function () {
       overlay.fadeFromBlack();
       overlay.showTitle(overlayInput);
     });
