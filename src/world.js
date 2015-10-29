@@ -20,8 +20,6 @@ var World = function () {
   EventEmitter.call(this);
 
   var handleCollision = function (player, collision, type) {
-    player.handleCollision(collision);
-
     if (type === 2) {
       scene.remove(player.avatar);
       players = _.without(players, player); // TODO: use a dead flag instead
@@ -39,7 +37,7 @@ var World = function () {
   this.update = function (ticks, step) {
     _.each(players, function (p) {
       p.update(ticks, step);
-      map.checkCollides(p, 1, handleCollision);
+      map.handleCollides(p, 1);
       map.checkCollides(p, 2, handleCollision);
     });
   };
