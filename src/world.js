@@ -23,10 +23,14 @@ var World = function () {
     if (type === 2) {
       scene.remove(player.avatar);
       players = _.without(players, player); // TODO: use a dead flag instead
-      _.each(targets, function (t) {
-        // if (t.position.x === c.cell.x && t.position.y === c.cell.y) {
-        //   scene.remove(t);
-        // }
+      _.every(targets, function (t) {
+        if (t.position.x === collision.x && t.position.y === collision.y) {
+          scene.remove(t);
+          map.removeBlock(collision.x, collision.y);
+          targets = _.without(targets, t);
+          return false;
+        }
+        return true;
       });
 
       self.emit('world.player.killed', player);
@@ -94,7 +98,7 @@ var World = function () {
   };
 
   this.isComplete = function () {
-    return false;
+    return targets.length === 0;
   };
 
 };

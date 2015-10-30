@@ -35,29 +35,35 @@ var Map = function () {
     cells = [];
   };
 
+  this.removeBlock = function (x, y) {
+    cells[y][x] = 0;
+  };
+
   this.addBlocks = function (blocks) {
     cells = blocks;
   };
 
   this.checkCollides = function () {
-    var collision, line = new Line();
-    var checkRawLines = function (x, y, i, handler, entity, layer) {
+    var collision, line = new Line(), x, y;
+    var checkRawLines = function (i, handler, entity, layer) {
       _.each(raw[i], function (l) {
         line.set(l, x, y);
         _.each(entity.getPoints(), function (p) {
           collision = line.detectCollision(p);
           if (collision) {
+            collision.x = x + add[i][0];
+            collision.y = y + add[i][1];
             handler(entity, collision, layer);
           }
         });
       });
     };
     return function (entity, layer, handler) {
-      var x = Math.floor(entity.position().x),
-        y = Math.floor(entity.position().y);
+      x = Math.floor(entity.position().x);
+      y = Math.floor(entity.position().y);
       _.each(add, function (a, n) {
         if (tcell(x + a[0], y + a[1]) === layer) {
-          checkRawLines(x, y, n, handler, entity, layer);
+          checkRawLines(n, handler, entity, layer);
         }
       });
     };
