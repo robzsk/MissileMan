@@ -40,11 +40,10 @@ var Map = function () {
   };
 
   this.checkCollides = function () {
-    var collision;
+    var collision, line = new Line();
     var checkRawLines = function (x, y, i, handler, entity, layer) {
-      // var line = new Line();//TODO: recycle
       _.each(raw[i], function (l) {
-        var line = new Line(l, x, y);
+        line.set(l, x, y);
         _.each(entity.getPoints(), function (p) {
           collision = line.detectCollision(p);
           if (collision) {
@@ -65,7 +64,7 @@ var Map = function () {
   }();
 
   this.handleCollides = function () {
-    var collision;
+    var collision, pool = [];
     var getOptimisedLines = function (entity, layer) {
       var x = Math.floor(entity.position().x),
         y = Math.floor(entity.position().y),
@@ -75,7 +74,15 @@ var Map = function () {
         mask += tcell(x + a[0], y + a[1]) === layer ? a[2] : 0;
       });
       _.each(optimised[mask], function (l) {
-        ret.push(new Line(l, x, y));
+        var line;
+        // allocate a new line from the pool
+        if (pool.length <= ret.length) {
+          line = new Line(l, x, y);
+          pool.push(line);
+        } else {
+          line = pool[ret.length].set(l, x, y);
+        }
+        ret.push(line);
       });
       return ret;
     };

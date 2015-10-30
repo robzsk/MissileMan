@@ -10,7 +10,7 @@ var ReplayInput = function (file) {
   EventEmitter.call(this);
 
   this.update = function (tick) {
-    var m = moves['_' + tick];
+    var m = moves[tick.toString()];
     if (m) {
       self.emit('input.move', _.clone(m));
     }
@@ -47,7 +47,7 @@ var KeyboardInput = function (keys) {
 
   this.update = function (tick) {
     if (!_.isMatch(current, prev)) {
-      moves['_' + tick] = _.clone(current);
+      moves[tick.toString()] = _.clone(current);
       self.emit('input.move', _.clone(current));
       _.extend(prev, current); // copy
     }

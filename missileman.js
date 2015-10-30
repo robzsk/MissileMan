@@ -5,7 +5,7 @@
 
   const _ = require('underscore'),
     Overlay = require('./src/overlay'),
-    Input = require('./src/input'),
+    Input = require('./src/engine/input'),
     Player = require('./src/player'),
     World = require('./src/world'),
     assets = require('./src/assets'),

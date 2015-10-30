@@ -1,16 +1,16 @@
 var Line = function (p, x, y) {
-  var p1 = {x: p.a[0] + x, y: p.a[1] + y},
-    p2 = {x: p.b[0] + x, y: p.b[1] + y},
-    n = {x: p.n[0], y: p.n[1]};
+  var p1, p2, n, piece = new THREE.Vector2(), pLengthSq;
 
-  var piece = function () {
-    var piece = new THREE.Vector2();
-    return piece.subVectors(p2, p1);
-  }();
-
-  var pLengthSq = function () {
-    return piece.lengthSq();
-  }();
+  var set = function (p, x, y) {
+    if (typeof p === 'object') {
+      p1 = {x: p.a[0] + x, y: p.a[1] + y};
+      p2 = {x: p.b[0] + x, y: p.b[1] + y};
+      n = {x: p.n[0], y: p.n[1]};
+      piece.subVectors(p2, p1);
+      pLengthSq = piece.lengthSq();
+    }
+    return this;
+  };
 
   var nearestPoint = function () {
     var tmp = new THREE.Vector2(),
@@ -29,10 +29,13 @@ var Line = function (p, x, y) {
     };
   }();
 
+  set(p, x, y);
+
   return {
     p1: p1,
     p2: p2,
     n: n,
+    set: set,
 
     detectCollision: function () {
       var pointToPos = new THREE.Vector2(),
