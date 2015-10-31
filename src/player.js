@@ -18,12 +18,10 @@ const points = [
   { x: 0, y: -0.175, z: 0, r: RADIUS, rs: RADIUS * RADIUS }
 ];
 
-var Player = function (conf) {
-  'use strict';
-
-  var entity = new Entity(points);
-
-  var dead = false;
+var Player = function () {
+  var entity = new Entity(points),
+    dead = false,
+    input;
 
   var keys = {
     left: false, right: false, jump: false, morph: false,
@@ -68,7 +66,6 @@ var Player = function (conf) {
       }
       thrust(force, rotation, MISSILE_TRUST);
     }
-
   };
 
   var applyDamping = function (v) {
@@ -100,21 +97,8 @@ var Player = function (conf) {
     keys.morph = m.morph;
   };
 
-  conf.input.on('input.move', handleInput);
-
-  this.detatchInput = function () {
-    conf.input.removeListener('input.move', handleInput);
-  };
-
-  this.reset = function () {
-    dead = false;
-    morph.reset();
-    keys.reset();
-    entity.reset(conf.spawn.x, conf.spawn.y);
-  };
-
   this.update = function (ticks, dt) {
-    conf.input.update(ticks);
+    input.update(ticks);
     morph.update();
     entity.update(dt, applyForce, applyDamping);
   };
@@ -129,7 +113,18 @@ var Player = function (conf) {
 
   this.kill = function () {
     dead = true;
-    this.detatchInput();
+    input.removeListener('input.move', handleInput);
+  };
+
+  this.set = function (conf) {
+    dead = false;
+    keys.reset();
+    morph.reset();
+    input = conf.input;
+    // TODO: probably should do this somwhere else
+    input.removeAllListeners('input.move'); // there can be only one
+    input.on('input.move', handleInput);
+    entity.reset(conf.spawn.x, conf.spawn.y);
   };
 
   this.position = entity.position;
@@ -137,7 +132,6 @@ var Player = function (conf) {
   this.getPoints = entity.getPoints;
   this.handleCollision = entity.handleCollision;
 
-  this.reset();
 };
 
 module.exports = Player;

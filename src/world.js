@@ -66,9 +66,6 @@ var World = function () {
   };
 
   this.clear = function () {
-    _.each(players, function (p) {
-      p.detatchInput();
-    });
     players = [];
     targets = [];
     map.clear();

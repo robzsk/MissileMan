@@ -1,10 +1,12 @@
 'use strict';
 
 var util = require('util'),
-  EventEmitter = require('events').EventEmitter;
+  EventEmitter = require('events').EventEmitter,
+  Input = require('./engine/input');
 
 var Overlay = function () {
-  var input, self = this;
+  var self = this,
+    input = new Input({ keys: { up: 38, down: 40, select: 13 } });
 
   EventEmitter.call(this);
 
@@ -49,10 +51,9 @@ var Overlay = function () {
     fader.stop().animate({opacity: 0}, 600);
   };
 
-  this.showTitle = function (i) {
+  this.showTitle = function () {
     button.stop()
       .animate({bottom: '100px'}, 600, 'easeOutBack');
-    input = i;
     input.removeListener('input.move', onInput);
     input.on('input.move', onInput);
   };
@@ -60,6 +61,10 @@ var Overlay = function () {
   this.hideTitle = function () {
     button.stop()
       .animate({bottom: '-100px'}, 400, 'easeInBack');
+  };
+
+  this.update = function (ticks) {
+    input.update(ticks);
   };
 
 };

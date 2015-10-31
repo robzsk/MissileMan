@@ -5,7 +5,6 @@
 
   const _ = require('underscore'),
     Overlay = require('./src/overlay'),
-    Input = require('./src/engine/input'),
     World = require('./src/world'),
     assets = require('./src/assets'),
     loop = require('./src/engine/loop'),
@@ -13,8 +12,7 @@
 
   var overlay = new Overlay(),
     world = new World(),
-    spawnPoints,
-    overlayInput = new Input({ keys: { up: 38, down: 40, select: 13 } });
+    spawnPoints;
 
   var loadLevelFromFile = function () {
     var setup = function (level) {
@@ -49,10 +47,10 @@
   var showTitle = function () {
     loop.reset();
     replays.reload();
-    replays.setDemo(true);
+    replays.setDemoMode(true);
     loadLevelFromFile(DEFAULT_LEVEL, setupPlayers);
     overlay.fadeFromBlack();
-    overlay.showTitle(overlayInput);
+    overlay.showTitle();
   };
 
   world.on('world.player.killed', function (player) {
@@ -60,6 +58,7 @@
       replays.save();
     }
 
+    // TODO: should be doing this in setTImeout?
     replays.next();
 
     setTimeout(function () {
@@ -74,7 +73,7 @@
   });
 
   overlay.on('title.playbutton.click', function () {
-    replays.setDemo(false);
+    replays.setDemoMode(false);
     overlay.hideTitle();
     overlay.fadeFromBlack();
     loadLevelFromFile(DEFAULT_LEVEL, startLevel);
@@ -85,7 +84,7 @@
   });
 
   loop.on('loop.update', function (ticks, step) {
-    overlayInput.update(ticks);
+    overlay.update(ticks);
     world.update(ticks, step);
   });
 

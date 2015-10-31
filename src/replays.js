@@ -52,6 +52,7 @@ module.exports = function () {
       }
     },
 
+    // TODO: use a object pool here
     next: function () {
       if (!demo) {
         replays[currentPlayer].input = new Input({replay: playerInput.serialize()});
@@ -67,22 +68,31 @@ module.exports = function () {
       }
     },
 
-    setDemo: function (d) {
+    setDemoMode: function (d) {
       demo = d;
     },
 
     getPlayers: function () {
-      var players = [];
-      // must have at least one replay
-      if (replays.length === 0) {
-        createCurrentPlayer();
-      }
-      _.each(replays, function (r, n) {
-        // world.addPlayer(new Player(r), n === currentPlayer);
-        players.push(new Player(r));
-      });
-      return players;
-    }
+      var player, ret, pool = [];
+      return function () {
+        ret = [];
+        // must have at least one replay
+        if (replays.length === 0) {
+          createCurrentPlayer();
+        }
+        _.each(replays, function (r) {
+          if (pool.length <= ret.length) {
+            player = new Player();
+            pool.push(player);
+          } else {
+            player = pool[ret.length];
+          }
+          player.set(r);
+          ret.push(player);
+        });
+        return ret;
+      };
+    }()
   };
 
 }();
