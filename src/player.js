@@ -23,6 +23,8 @@ var Player = function (conf) {
 
   var entity = new Entity(points);
 
+  var dead = false;
+
   var keys = {
     left: false, right: false, jump: false, morph: false,
     reset: function () {
@@ -105,9 +107,10 @@ var Player = function (conf) {
   };
 
   this.reset = function () {
+    dead = false;
     morph.reset();
     keys.reset();
-    entity.reset(conf.pos.x, conf.pos.y);
+    entity.reset(conf.spawn.x, conf.spawn.y);
   };
 
   this.update = function (ticks, dt) {
@@ -120,11 +123,21 @@ var Player = function (conf) {
     return morph.getScale();
   };
 
+  this.isDead = function () {
+    return dead;
+  };
+
+  this.kill = function () {
+    dead = true;
+    this.detatchInput();
+  };
+
   this.position = entity.position;
   this.rotation = entity.rotation;
   this.getPoints = entity.getPoints;
   this.handleCollision = entity.handleCollision;
 
+  this.reset();
 };
 
 module.exports = Player;

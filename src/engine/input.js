@@ -5,7 +5,7 @@ var _ = require('underscore'),
   EventEmitter = require('events').EventEmitter;
 
 var ReplayInput = function (file) {
-  var moves = JSON.parse(file), self = this;
+  var moves = file ? JSON.parse(file) : [], self = this;
 
   EventEmitter.call(this);
 
@@ -15,6 +15,11 @@ var ReplayInput = function (file) {
       self.emit('input.move', _.clone(m));
     }
   };
+
+  this.serialize = function () {
+    return JSON.stringify(moves);
+  };
+
 };
 util.inherits(ReplayInput, EventEmitter);
 
@@ -39,6 +44,7 @@ var KeyboardInput = function (keys) {
 
   this.reset = function () {
     moves = {};
+    self.removeAllListeners('input.move');
   };
 
   this.serialize = function () {
@@ -56,9 +62,10 @@ var KeyboardInput = function (keys) {
 util.inherits(KeyboardInput, EventEmitter);
 
 module.exports = function (config) {
-  if (config.replay) {
-    return new ReplayInput(config.replay);
-  } else {
+  config = config || {};
+  if (typeof config.keys === 'object') {
     return new KeyboardInput(config.keys);
+  } else {
+    return new ReplayInput(config.replay);
   }
 };

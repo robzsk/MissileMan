@@ -41,7 +41,6 @@ var Overlay = function () {
   var onInput = function (m) {
     if (m.select) {
       self.emit('title.playbutton.click');
-      input.removeListener('input.move', onInput);
     }
   };
 
@@ -54,6 +53,7 @@ var Overlay = function () {
     button.stop()
       .animate({bottom: '100px'}, 600, 'easeOutBack');
     input = i;
+    input.removeListener('input.move', onInput);
     input.on('input.move', onInput);
   };
 

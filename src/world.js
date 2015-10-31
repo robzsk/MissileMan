@@ -22,7 +22,6 @@ var World = function () {
   var handleCollision = function (player, collision, type) {
     if (type === 2) {
       scene.remove(player.avatar);
-      players = _.without(players, player); // TODO: use a dead flag instead
       _.every(targets, function (t) {
         if (t.position.x === collision.x && t.position.y === collision.y) {
           scene.remove(t);
@@ -32,17 +31,23 @@ var World = function () {
         }
         return true;
       });
-
-      self.emit('world.player.killed', player);
+      if (!player.isDead()) {
+        player.kill();
+        if (player === playerToWatch) {
+          self.emit('world.player.killed');
+        }
+      }
     }
 
   };
 
   this.update = function (ticks, step) {
     _.each(players, function (p) {
-      p.update(ticks, step);
-      map.handleCollides(p, 1);
-      map.checkCollides(p, 2, handleCollision);
+      if (!p.isDead()) {
+        p.update(ticks, step);
+        map.handleCollides(p, 1);
+        map.checkCollides(p, 2, handleCollision);
+      }
     });
   };
 
@@ -55,12 +60,15 @@ var World = function () {
     });
 
     if (playerToWatch) {
-      scene.follow(playerToWatch.position);
+      scene.follow(playerToWatch.avatar.position);
     }
     scene.render();
   };
 
   this.clear = function () {
+    _.each(players, function (p) {
+      p.detatchInput();
+    });
     players = [];
     targets = [];
     map.clear();
@@ -72,7 +80,7 @@ var World = function () {
     player.avatar = assets.cubePlayer();
     scene.add(player.avatar);
     if (watch) {
-      playerToWatch = player.avatar;
+      playerToWatch = player;
     }
   };
 

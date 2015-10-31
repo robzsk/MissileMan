@@ -12,6 +12,9 @@ module.exports = function () {
     }
   };
   return {
+    replays: function (v) {
+      return s('replays', v);
+    },
     test: function (v) {
       return s('test', v);
     },
