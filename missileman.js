@@ -6,22 +6,20 @@
   const _ = require('underscore'),
     Overlay = require('./src/overlay'),
     Input = require('./src/engine/input'),
-    Player = require('./src/player'),
     World = require('./src/world'),
     assets = require('./src/assets'),
     loop = require('./src/engine/loop'),
-    storage = require('./src/storage');
+    replays = require('./src/replays');
 
   var overlay = new Overlay(),
     world = new World(),
     spawnPoints,
-    playerInput = new Input({ keys: { left: 37, right: 39, jump: 38, morph: 67 } }),
     demo = true,
     overlayInput = new Input({ keys: { up: 38, down: 40, select: 13 } });
 
   var loadLevelFromFile = function () {
     var setup = function (level) {
-      spawnPoints = level.spawnPoints;
+      replays.init(level.spawnPoints);
       world.addBlocks(level.cells);
     };
     return function (levelFile, callback) {
@@ -37,40 +35,21 @@
     };
   }();
 
-  var createCurrentPlayer = function () {
-    replays.push({
-      // assumed level is already loaded
-      // assumed currentPlayer is less than spawnPoints.length
-      spawn: spawnPoints[currentPlayer],
-      input: playerInput
-    });
-  };
-
-  var replays = [];
-  var currentPlayer = 0;
   var setupPlayers = function () {
-    // must have at least one replay
-    if (replays.length === 0) {
-      createCurrentPlayer();
-    }
-    // add the players to the level
-    _.each(replays, function (r, n) {
-      world.addPlayer(new Player(r), n === currentPlayer);
+    _.each(replays.getPlayers(), function (p, n) {
+      world.addPlayer(p, n === replays.getCurrentPlayer());
     });
-
   };
 
   var startLevel = function () {
     loop.reset();
-    replays = [];
-    currentPlayer = 0;
+    replays.reset();
     setupPlayers();
   };
 
   var showTitle = function () {
     loop.reset();
-    replays = storage.replays();
-    currentPlayer = 0;
+    replays.reload();
     demo = true;
     loadLevelFromFile(DEFAULT_LEVEL, setupPlayers);
     overlay.fadeFromBlack();
@@ -78,26 +57,12 @@
   };
 
   world.on('world.player.killed', function (player) {
-    if (world.isComplete()) {
-      storage.replays(replays);
+    if (world.isComplete() && !demo) {
+      replays.save();
     }
 
-    if (!demo) {
-      replays[currentPlayer].input = new Input({replay: playerInput.serialize()});
-      playerInput.reset();
-    }
+    replays.next(demo);
 
-    currentPlayer += 1;
-    if (currentPlayer >= spawnPoints.length) {
-      currentPlayer = 0;
-    }
-    if (!replays[currentPlayer]) {
-      createCurrentPlayer();
-    } else {
-      if (!demo) {
-        replays[currentPlayer].input = playerInput;
-      }
-    }
     setTimeout(function () {
       if (world.isComplete()) {
         showTitle();
