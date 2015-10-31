@@ -46,27 +46,6 @@
     });
   };
 
-  var saveReplays = function () {
-    var reps = [];
-    _.each(replays, function (r) {
-      reps.push({
-        spawn: r.spawn,
-        input: r.input.serialize()
-      });
-    });
-    storage.replays(reps);
-  };
-  var loadReplays = function () {
-    var reps = storage.replays();
-    replays = [];
-    _.each(reps, function (r) {
-      replays.push({
-        spawn: r.spawn,
-        input: new Input({replay: r.input})
-      });
-    });
-  };
-
   var replays = [];
   var currentPlayer = 0;
   var setupPlayers = function () {
@@ -90,10 +69,9 @@
 
   var showTitle = function () {
     loop.reset();
-    replays = [];
+    replays = storage.replays();
     currentPlayer = 0;
     demo = true;
-    loadReplays();
     loadLevelFromFile(DEFAULT_LEVEL, setupPlayers);
     overlay.fadeFromBlack();
     overlay.showTitle(overlayInput);
@@ -101,7 +79,7 @@
 
   world.on('world.player.killed', function (player) {
     if (world.isComplete()) {
-      saveReplays();
+      storage.replays(replays);
     }
 
     if (!demo) {
