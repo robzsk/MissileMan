@@ -10,7 +10,8 @@ module.exports = function () {
     replays = [],
     currentPlayer = 0,
     spawnPoints,
-    playerInput;
+    playerInput,
+    demo = true;
 
   var createCurrentPlayer = function () {
     replays.push({
@@ -46,10 +47,12 @@ module.exports = function () {
     },
 
     save: function () {
-      storage.replays(replays);
+      if (!demo) {
+        storage.replays(replays);
+      }
     },
 
-    next: function (demo) {
+    next: function () {
       if (!demo) {
         replays[currentPlayer].input = new Input({replay: playerInput.serialize()});
         playerInput.reset();
@@ -62,6 +65,10 @@ module.exports = function () {
           replays[currentPlayer].input = playerInput;
         }
       }
+    },
+
+    setDemo: function (d) {
+      demo = d;
     },
 
     getPlayers: function () {

@@ -14,7 +14,6 @@
   var overlay = new Overlay(),
     world = new World(),
     spawnPoints,
-    demo = true,
     overlayInput = new Input({ keys: { up: 38, down: 40, select: 13 } });
 
   var loadLevelFromFile = function () {
@@ -50,18 +49,18 @@
   var showTitle = function () {
     loop.reset();
     replays.reload();
-    demo = true;
+    replays.setDemo(true);
     loadLevelFromFile(DEFAULT_LEVEL, setupPlayers);
     overlay.fadeFromBlack();
     overlay.showTitle(overlayInput);
   };
 
   world.on('world.player.killed', function (player) {
-    if (world.isComplete() && !demo) {
+    if (world.isComplete()) {
       replays.save();
     }
 
-    replays.next(demo);
+    replays.next();
 
     setTimeout(function () {
       if (world.isComplete()) {
@@ -75,7 +74,7 @@
   });
 
   overlay.on('title.playbutton.click', function () {
-    demo = false;
+    replays.setDemo(false);
     overlay.hideTitle();
     overlay.fadeFromBlack();
     loadLevelFromFile(DEFAULT_LEVEL, startLevel);
