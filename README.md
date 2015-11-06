@@ -1,17 +1,7 @@
 Missileman
 ==========================
 
-Missileman is alive! and he's living in JavaScript!
-
-SUPPORTED BROWSERS
-==================
-
-TODO
-
-DEVELOPMENT
-===========
-
-TODO
+[Preview](https://htmlpreview.github.io/?https://github.com/robzsk/Missileman/blob/master/build/index.html)
 
 License
 =======

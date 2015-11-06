@@ -1,8 +1,6 @@
 (function () {
   'use strict';
 
-  const DEFAULT_LEVEL = 'level.json';
-
   const _ = require('underscore'),
     Overlay = require('./src/overlay'),
     World = require('./src/world'),
@@ -14,23 +12,12 @@
     world = new World(),
     spawnPoints;
 
-  var loadLevelFromFile = function () {
-    var setup = function (level) {
-      replays.init(level.spawnPoints);
-      world.addBlocks(level.cells);
-    };
-    return function (levelFile, callback) {
-      world.clear();
-      $.get(levelFile, function (req) {
-        if (req.cells) {
-          setup(req); // from a webserver the response is parsed already
-        } else {
-          setup(JSON.parse(req));
-        }
-        callback();
-      });
-    };
-  }();
+  var loadLevel = function () {
+    var level = assets.level.test();
+    world.clear();
+    replays.init(level.spawnPoints);
+    world.addBlocks(level.cells);
+  };
 
   var setupPlayers = function () {
     _.each(replays.getPlayers(), function (p, n) {
@@ -48,7 +35,8 @@
     loop.reset();
     replays.reload();
     replays.setDemoMode(true);
-    loadLevelFromFile(DEFAULT_LEVEL, setupPlayers);
+    loadLevel();
+    setupPlayers();
     overlay.fadeFromBlack();
     overlay.showTitle();
   };
@@ -58,7 +46,7 @@
       replays.save();
     }
 
-    // TODO: should be doing this in setTImeout?
+    // TODO: should be doing this in setTimeout?
     replays.next();
 
     setTimeout(function () {
@@ -67,7 +55,8 @@
       } else {
         overlay.fadeFromBlack();
         loop.reset();
-        loadLevelFromFile(DEFAULT_LEVEL, setupPlayers);
+        loadLevel();
+        setupPlayers();
       }
     }, 20);
   });
@@ -76,7 +65,8 @@
     replays.setDemoMode(false);
     overlay.hideTitle();
     overlay.fadeFromBlack();
-    loadLevelFromFile(DEFAULT_LEVEL, startLevel);
+    loadLevel();
+    startLevel();
   });
 
   $(document).ready(function () {

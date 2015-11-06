@@ -74,7 +74,7 @@ var World = function () {
 
   this.addPlayer = function (player, watch) {
     players.push(player);
-    player.avatar = assets.cubePlayer();
+    player.avatar = assets.model.cubePlayer();
     scene.add(player.avatar);
     if (watch) {
       playerToWatch = player;
@@ -88,12 +88,12 @@ var World = function () {
       _.each(row, function (cell, x) {
         var cube;
         if (cell === 1) {
-          cube = assets.cubeSolid();
+          cube = assets.model.cubeSolid();
         } else if (cell === 2) {
-          cube = assets.cubeTarget();
+          cube = assets.model.cubeTarget();
           targets.push(cube);
         } else {
-          cube = assets.cubeEmpty();
+          cube = assets.model.cubeEmpty();
         }
         cube.position.set(x, y, 0);
         scene.add(cube);
