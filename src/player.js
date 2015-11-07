@@ -131,6 +131,7 @@ var Player = function () {
   this.rotation = entity.rotation;
   this.getPoints = entity.getPoints;
   this.handleCollision = entity.handleCollision;
+  this.isMan = morph.isMan;
 
 };
 

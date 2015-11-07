@@ -21,7 +21,8 @@ var World = function () {
 
   var handleCollision = function (player, collision, type) {
     if (type === 2) {
-      scene.remove(player.avatar);
+      scene.remove(player.avatar.man);
+      scene.remove(player.avatar.missile);
       _.every(targets, function (t) {
         if (t.position.x === collision.x && t.position.y === collision.y) {
           scene.remove(t);
@@ -53,14 +54,21 @@ var World = function () {
 
   this.render = function (dt) {
     _.each(players, function (p) {
-      p.avatar.rotation.x = p.avatar.rotation.y = p.avatar.rotation.z = 0;
-      p.avatar.rotation.z = p.rotation().z;
-      p.avatar.position.copy(p.position());
-      p.avatar.scale.set(p.getScale(), p.getScale(), p.getScale());
+      p.avatar.missile.visible = p.avatar.man.visible = false;
+      if (p.isMan()) {
+        p.avatar.man.visible = true;
+        p.avatar.man.position.copy(p.position());
+        p.avatar.man.scale.set(p.getScale(), p.getScale(), p.getScale());
+      } else {
+        p.avatar.missile.visible = true;
+        p.avatar.missile.rotation.set(0, p.rotation().z * 1.5, p.rotation().z, 'ZYX');
+        p.avatar.missile.position.copy(p.position());
+        p.avatar.missile.scale.set(p.getScale(), p.getScale(), p.getScale());
+      }
     });
 
     if (playerToWatch) {
-      scene.follow(playerToWatch.avatar.position);
+      scene.follow(playerToWatch.position());
     }
     scene.render();
   };
@@ -74,8 +82,13 @@ var World = function () {
 
   this.addPlayer = function (player, watch) {
     players.push(player);
-    player.avatar = assets.model.cubePlayer();
-    scene.add(player.avatar);
+    if (!player.avatar) {
+      player.avatar = {};
+    }
+    player.avatar.man = assets.model.man();
+    player.avatar.missile = assets.model.missile();
+    scene.add(player.avatar.man);
+    scene.add(player.avatar.missile);
     if (watch) {
       playerToWatch = player;
     }
