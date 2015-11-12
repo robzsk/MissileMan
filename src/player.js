@@ -4,7 +4,8 @@ var thrust = require('./engine/thrust'),
   Morph = require('./morph');
 
 const MISSILE_MAX_SPEED = 10.0,
-  MISSILE_TORQUE = 5 * (Math.PI / 180),
+  MISSILE_MAX_ANGULAR_SPEED = 5.0,
+  MISSILE_TORQUE = 50.0,
   MISSILE_TRUST = new THREE.Vector3(0, 50.0, 0),
   MAN_MAX_XSPEED = 10,
   MAN_MAX_YSPEED = 10,
@@ -46,11 +47,11 @@ var Player = function () {
 
   var morph = new Morph(changeToMan, changeToMissile);
 
-  var applyForce = function (rotation, force) {
+  var applyForce = function (torque, force) {
     if (morph.isMan()) {
       if (keys.left) {
         force.x -= RUN_FORCE;
-      }else if (keys.right) {
+      } else if (keys.right) {
         force.x += RUN_FORCE;
       }
       if (keys.jump) {
@@ -60,25 +61,29 @@ var Player = function () {
       }
     } else {
       if (keys.left) {
-        rotation.z += MISSILE_TORQUE;
+        torque.z += MISSILE_TORQUE;
       } else if (keys.right) {
-        rotation.z -= MISSILE_TORQUE;
+        torque.z -= MISSILE_TORQUE;
       }
-      thrust(force, rotation, MISSILE_TRUST);
+      thrust(force, entity.rotation(), MISSILE_TRUST);
     }
   };
 
-  var applyDamping = function (v) {
+  var applyDamping = function (v, av) {
     if (morph.isMan()) {
+      av.z = 0;//cancel all angular velocity as man
       v.x = v.x < 0 ? Math.max(v.x, -MAN_MAX_YSPEED) : Math.min(v.x, MAN_MAX_YSPEED);
       v.y = v.y < 0 ? Math.max(v.y, -MAN_MAX_YSPEED) : Math.min(v.y, MAN_MAX_YSPEED);
-
       if (!keys.left && !keys.right) {
         v.x *= 0.8;
       } else if ((keys.left && v.x > 0) || (keys.right && v.x < 0)) {
         v.x *= 0.75;
       }
     } else {
+      av.z = av.z < 0 ? Math.max(av.z, -MISSILE_MAX_ANGULAR_SPEED) : Math.min(av.z, MISSILE_MAX_ANGULAR_SPEED);
+      if (!keys.left && !keys.right) {
+        av.z *= 0.9;
+      }
       if (v.length() > MISSILE_MAX_SPEED) {
         v.normalize();
         v.multiplyScalar(MISSILE_MAX_SPEED);

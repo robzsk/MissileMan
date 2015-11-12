@@ -4,6 +4,7 @@ var _ = require('underscore');
 
 var Entity = function (points) {
   var rotation = new THREE.Euler(),
+    angularVelocity = new THREE.Vector3(0, 0, 0),
     velocity = new THREE.Vector2(0, 0),
     position = new THREE.Vector2(0, 0);
 
@@ -27,22 +28,35 @@ var Entity = function (points) {
   }();
 
   this.update = function () {
-    var force = new THREE.Vector2();
+    var force = new THREE.Vector2(), torque = new THREE.Vector3();
     return function (dt, applyForce, applyDamping) {
       force.set(0, 0);
-      applyForce(rotation, force);
+      torque.set(0, 0, 0);
+
+      applyForce(torque, force, rotation);
+
       force.multiplyScalar(dt);
       velocity.add(force);
-      applyDamping(velocity);
+
+      torque.multiplyScalar(dt);
+      angularVelocity.add(torque);
+
+      applyDamping(velocity, angularVelocity);
+
       force.copy(velocity).multiplyScalar(dt);
+      torque.copy(angularVelocity).multiplyScalar(dt);
+
       position.add(force);
+      rotation.z += torque.z;
+
       toWorld();
     };
   }();
 
   this.reset = function (x, y) {
-    position.set(x, y, 0);
-    velocity.set(0, 0, 0);
+    position.set(x, y);
+    angularVelocity.set(0, 0, 0);
+    velocity.set(0, 0);
     rotation.set(0, 0, 0);
   };
 
