@@ -5,6 +5,9 @@
   "main": "index.js",
   "dependencies": {
     "bezier-easing": "^1.1.1",
+    "jquery": "^2.1.4",
+    "stats.js": "0.0.14-master",
+    "three": "^0.73.0",
     "underscore": "^1.8.3"
   },
   "devDependencies": {
