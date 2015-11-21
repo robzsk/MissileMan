@@ -1,6 +1,7 @@
 'use strict';
 
-var THREE = require('three');
+var _ = require('underscore'),
+	THREE = require('three');
 
 var levels = {
 	test: {
@@ -71,37 +72,43 @@ var levels = {
 
 var modelFiles = require('./models.js');
 
+var meshConfigs = [
+	{ name: 'empty', file: 'empty', color: 0x3e3e3e },
+	{ name: 'solid', color: 0x3e3e3e },
+	{ name: 'target', file: 'solid', color: 0xac4442 },
+	{ name: 'man' },
+	{ name: 'missile' }
+];
+
 module.exports = function () {
 	var mesh = {};
 
-	const createCube = function (color) {
-		var geometry = new THREE.BoxGeometry(1, 1, 1),
-			material = new THREE.MeshBasicMaterial({ color: color }),
-			cube = new THREE.Mesh(geometry, material);
-		return cube;
-	};
-
 	var Assets = function () {
 		this.load = function (onloaded) {
-			var loader = new THREE.JSONLoader();
-			var loadMesh = function (name, mf, color) {
-				var object = loader.parse(modelFiles[mf]);
-				var material = object.materials || (color === undefined ?
-						new THREE.MeshDepthMaterial() : new THREE.MeshBasicMaterial({ color: color }));
-				if (material.length >= 1) {
-					// mesh[name] = THREE.SceneUtils.createMultiMaterialObject(object.geometry, material);
-					mesh[name] = new THREE.Mesh(object.geometry, new THREE.MeshFaceMaterial(material));
+			var loader = new THREE.JSONLoader(), loaded = meshConfigs.length;
+			var complete = function () {
+				loaded -= 1;
+				if (loaded <= 0) {
+					onloaded();
 				}
-
-				else
-					mesh[name] = new THREE.Mesh(object.geometry, material);
 			};
-			loadMesh('empty', 'empty');
-			loadMesh('solid', 'solid');
-			loadMesh('target', 'solid', 0xac4442);
-			loadMesh('man', 'man', 0x0179d5);
-			loadMesh('missile', 'missile', 0x0179d5);
-			onloaded();
+			var loadMesh = function (conf) {
+				var object = loader.parse(modelFiles[conf.file || conf.name]);
+				var material = object.materials || new THREE.MeshBasicMaterial({ color: conf.color });
+				if (material.length >= 1) {
+					console.log(conf.name);
+					mesh[conf.name] = new THREE.Mesh(object.geometry, new THREE.MeshFaceMaterial(material));
+				} else {
+					mesh[conf.name] = new THREE.Mesh(object.geometry, material);
+				}
+				mesh[conf.name].castShadow = true;
+				mesh[conf.name].receiveShadow = true;
+				complete();
+			};
+			_.each(meshConfigs, function (c) {
+				loadMesh(c);
+			});
+
 		};
 
 		this.model = {

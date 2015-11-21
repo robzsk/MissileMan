@@ -16,8 +16,8 @@ const MISSILE_MAX_SPEED = 10.0,
 
 const RADIUS = 0.25;
 const points = [
-	{ x: 0, y: 0.175, z: 0, r: RADIUS, rs: RADIUS * RADIUS },
-	{ x: 0, y: -0.175, z: 0, r: RADIUS, rs: RADIUS * RADIUS }
+	{ x: 0, y: 0.25, z: 0, r: RADIUS, rs: RADIUS * RADIUS },
+	{ x: 0, y: -0.25, z: 0, r: RADIUS, rs: RADIUS * RADIUS }
 ];
 
 var Player = function () {
