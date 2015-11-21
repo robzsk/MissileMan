@@ -2,7 +2,8 @@
 var THREE = require('three'),
 	thrust = require('./engine/thrust'),
 	Entity = require('./engine/entity'),
-	Morph = require('./morph');
+	Morph = require('./morph'),
+	Flame = require('./flame');
 
 const MISSILE_MAX_SPEED = 10.0,
 	MISSILE_MAX_ANGULAR_SPEED = 5.0,
@@ -23,7 +24,8 @@ const points = [
 var Player = function () {
 	var entity = new Entity(points),
 		dead = false,
-		input;
+		input,
+		flame = new Flame();
 
 	var keys = {
 		left: false, right: false, jump: false, morph: false,
@@ -34,6 +36,7 @@ var Player = function () {
 
 	var changeToMan = function () {
 		entity.setRotation();
+		flame.stop();
 	};
 
 	var changeToMissile = function () {
@@ -44,6 +47,7 @@ var Player = function () {
 		} else {
 			entity.setRotation(-Math.atan2(v.x, v.y));
 		}
+		flame.start();
 	};
 
 	var morph = new Morph(changeToMan, changeToMissile);
@@ -104,9 +108,16 @@ var Player = function () {
 	};
 
 	this.update = function (ticks, dt) {
-		input.update(ticks);
-		morph.update();
-		entity.update(dt, applyForce, applyDamping);
+		if (!dead) {
+			input.update(ticks);
+			morph.update();
+			entity.update(dt, applyForce, applyDamping);
+			if (!morph.isMan()) {
+				flame.updatePosition(entity.getPoints()[1]);
+			}
+		}
+
+		flame.update();
 	};
 
 	this.getScale = function () {
@@ -120,6 +131,7 @@ var Player = function () {
 	this.kill = function () {
 		dead = true;
 		input.removeListener('input.move', handleInput);
+		flame.stop();
 	};
 
 	this.set = function (conf) {
@@ -131,6 +143,11 @@ var Player = function () {
 		input.removeAllListeners('input.move'); // there can be only one
 		input.on('input.move', handleInput);
 		entity.reset(conf.spawn.x, conf.spawn.y);
+		flame.stop();
+	};
+
+	this.getFlame = function () {
+		return flame.particleSystem;
 	};
 
 	this.position = entity.position;

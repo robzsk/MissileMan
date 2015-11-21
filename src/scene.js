@@ -1,7 +1,8 @@
 'use strict';
 
 var _ = require('underscore'),
-	THREE = require('three');
+	THREE = require('three'),
+	Flame = require('./flame');
 
 // returns a soft edge for the camera position looking at the world
 var edge = function () {
@@ -44,18 +45,25 @@ var edge = function () {
 	return edge;
 }();
 
+var WIDTH = window.innerWidth;
+var HEIGHT = window.innerHeight;
 const zoom = 1;
 const windowWidth = window.innerWidth;
 const windowHeight = window.innerHeight;
+
 var Scene = function () {
 	var scene = new THREE.Scene(),
-		// cam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, zoom - 9, zoom),
+		// cam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 26 - 9, 26),
 		cam = new THREE.OrthographicCamera(windowWidth * zoom / -2, windowWidth * zoom / 2, windowHeight * zoom / 2, windowHeight * zoom / -2, 0, 1),
+
+		// cam = new THREE.PerspectiveCamera(40, WIDTH / HEIGHT, 1, 10000),
+
 		ambientLight = new THREE.AmbientLight(0xffffff),
 		renderer = new THREE.WebGLRenderer({ antialias: true });
 
 	cam.position.set(0, 0, 10);
 	cam.zoom = 28;
+	// cam.position.z = 300;
 	cam.updateProjectionMatrix();
 
 	scene.add(cam);

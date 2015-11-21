@@ -96,7 +96,6 @@ module.exports = function () {
 				var object = loader.parse(modelFiles[conf.file || conf.name]);
 				var material = object.materials || new THREE.MeshBasicMaterial({ color: conf.color });
 				if (material.length >= 1) {
-					console.log(conf.name);
 					mesh[conf.name] = new THREE.Mesh(object.geometry, new THREE.MeshFaceMaterial(material));
 				} else {
 					mesh[conf.name] = new THREE.Mesh(object.geometry, material);

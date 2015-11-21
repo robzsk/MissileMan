@@ -44,11 +44,9 @@ var World = function () {
 
 	this.update = function (ticks, step) {
 		_.each(players, function (p) {
-			if (!p.isDead()) {
-				p.update(ticks, step);
-				map.handleCollides(p, 1);
-				map.checkCollides(p, 2, handleCollision);
-			}
+			p.update(ticks, step);
+			map.handleCollides(p, 1);
+			map.checkCollides(p, 2, handleCollision);
 		});
 	};
 
@@ -57,12 +55,12 @@ var World = function () {
 			p.avatar.missile.visible = p.avatar.man.visible = false;
 			if (p.isMan()) {
 				p.avatar.man.visible = true;
-				p.avatar.man.position.copy(p.position());
+				p.avatar.man.position.set(p.position().x, p.position().y, 0.5);// TODO: set the z position elsewhere
 				p.avatar.man.scale.set(p.getScale(), p.getScale(), p.getScale());
 			} else {
 				p.avatar.missile.visible = true;
 				p.avatar.missile.rotation.set(0, 0, p.rotation().z, 'ZYX');
-				p.avatar.missile.position.copy(p.position());
+				p.avatar.missile.position.set(p.position().x, p.position().y, 0.5);// TODO: set the z position elsewhere
 				p.avatar.missile.scale.set(p.getScale(), p.getScale(), p.getScale());
 			}
 		});
@@ -89,6 +87,7 @@ var World = function () {
 		player.avatar.missile = assets.model.missile();
 		scene.add(player.avatar.man);
 		scene.add(player.avatar.missile);
+		scene.add(player.getFlame());
 		if (watch) {
 			playerToWatch = player;
 		}

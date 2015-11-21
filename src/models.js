@@ -40,44 +40,42 @@ module.exports = {
 		}]
 	},
 	man: {
-		'vertices': [0.25, -0.5, -0, -0.25, -0.5, -0, 0.25, 0.5, 0, -0.25, 0.5, -0, 0.25, 0.1, -0, -0.25, 0.1, -0],
-		'faces': [3, 4, 2, 3, 5, 1, 3, 0, 4, 5, 1, 0],
-		'name': 'CubeGeometry.4',
+		'materials': [{
+			'colorDiffuse': [1, 1, 1],
+			'transparent': false,
+			'depthTest': true,
+			'depthWrite': true,
+			'blending': 'NormalBlending',
+			'wireframe': false,
+			'colorEmissive': [1, 1, 1],
+			'opacity': 1,
+			'shading': 'lambert',
+			'visible': true,
+			'DbgName': 'Body'
+		}, {
+			'colorDiffuse': [0.015066, 0.023716, 1],
+			'transparent': false,
+			'depthTest': true,
+			'depthWrite': true,
+			'blending': 'NormalBlending',
+			'wireframe': false,
+			'colorEmissive': [0.015066, 0.023716, 1],
+			'opacity': 1,
+			'shading': 'lambert',
+			'visible': true,
+			'DbgName': 'Head'
+		}],
 		'metadata': {
-			'version': 3,
-			'vertices': 6,
-			'type': 'Geometry',
 			'faces': 2,
 			'materials': 2,
-			'generator': 'io_three'
+			'version': 3,
+			'generator': 'io_three',
+			'vertices': 6,
+			'type': 'Geometry'
 		},
-		'materials': [{
-			'shading': 'lambert',
-			'depthTest': true,
-			'opacity': 1,
-			'wireframe': false,
-			'transparent': false,
-			'colorDiffuse': [1, 1, 1],
-			'DbgName': 'Body',
-			'depthWrite': true,
-			'blending': 'NormalBlending',
-			'DbgIndex': 0,
-			'colorEmissive': [1, 1, 1],
-			'visible': true
-		}, {
-			'shading': 'lambert',
-			'depthTest': true,
-			'opacity': 1,
-			'wireframe': false,
-			'transparent': false,
-			'colorDiffuse': [0.015066, 0.023716, 1],
-			'DbgName': 'Head',
-			'depthWrite': true,
-			'blending': 'NormalBlending',
-			'DbgIndex': 1,
-			'colorEmissive': [0.015066, 0.023716, 1],
-			'visible': true
-		}]
+		'faces': [3, 4, 2, 3, 5, 1, 3, 0, 4, 5, 1, 0],
+		'vertices': [0.25, -0.5, -0, -0.25, -0.5, -0, 0.25, 0.5, 0, -0.25, 0.5, -0, 0.25, 0.1, -0, -0.25, 0.1, -0],
+		'name': 'CubeGeometry'
 	},
 	empty: {
 		'metadata': {
