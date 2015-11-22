@@ -3,11 +3,11 @@
 var THREE = require('three');
 
 var Particle = function () {
-	var position = new THREE.Vector3(0, 0, 0);
-	var velocity = new THREE.Vector2(0, 0.05);
-	var life = Math.random();
+	var position = new THREE.Vector3(0, 0, 0),
+		velocity = new THREE.Vector2(0, 0.05),
+		life = Math.random();
 
-	var d = function () {
+	var dir = function () {
 		return Math.random() < 0.5 ? -1 : 1;
 	};
 
@@ -20,8 +20,8 @@ var Particle = function () {
 				position.set(p.x, p.y, 0);
 				velocity.x = 0;
 				velocity.y = Math.random() * 0.06;
-				position.x += Math.random() * 0.2 * d();
-				position.y += Math.random() * 0.2 * d();
+				position.x += Math.random() * 0.2 * dir();
+				position.y += Math.random() * 0.2 * dir();
 				position.z = 0;// back in view
 				life = Math.random();
 			} else {
@@ -42,13 +42,18 @@ var Particle = function () {
 		return life * 10;
 	};
 };
+// --end particle
 
 module.exports = function () {
-	var particleSystem, geometry;
-
-	var stopped = true;
-
-	var num = 50;
+	var particleSystem,
+		geometry,
+		stopped = true,
+		num = 50,// number of particles
+		positions = new Float32Array(num * 3),
+		colors = new Float32Array(num * 3),
+		sizes = new Float32Array(num),
+		particles = [],
+		position = new THREE.Vector2(), i, i3;
 
 	var shaderMaterial = new THREE.ShaderMaterial({
 		uniforms: { color: { type: 'c', value: new THREE.Color(0xffffff) } },
@@ -61,26 +66,17 @@ module.exports = function () {
 
 	});
 
-	var positions = new Float32Array(num * 3);
-	var colors = new Float32Array(num * 3);
-	var sizes = new Float32Array(num);
-	var particles = [];
-
 	geometry = new THREE.BufferGeometry();
 
-	for ( var i = 0, i3 = 0; i < num; i++, i3 += 3) {
-		positions[ i3 + 0 ] = 0;
-		positions[ i3 + 1 ] = 0;
-		positions[ i3 + 2 ] = 0;
-
-		colors[ i3 + 0 ] = 0.2;
-		colors[ i3 + 1 ] = 0.2;
-		colors[ i3 + 2 ] = 1;
-
-		sizes[ i ] = 0;
-
+	for (i = 0, i3 = 0; i < num; i++, i3 += 3) {
+		positions[i3 + 0] = 0;
+		positions[i3 + 1] = 0;
+		positions[i3 + 2] = 0;
+		colors[i3 + 0] = 0.2;
+		colors[i3 + 1] = 0.2;
+		colors[i3 + 2] = 1;
+		sizes[i] = 0;
 		particles.push(new Particle());
-
 	}
 
 	geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -88,8 +84,6 @@ module.exports = function () {
 	geometry.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
 	particleSystem = new THREE.Points(geometry, shaderMaterial);
-
-	var position = new THREE.Vector2();
 
 	this.particleSystem = particleSystem;
 
@@ -107,12 +101,11 @@ module.exports = function () {
 	};
 
 	this.update = function () {
-		var time = Date.now() * 0.005;
-		// particleSystem.rotation.z = 0.01 * time;
-		var sizes = geometry.attributes.size.array;
-		var positions = geometry.attributes.position.array;
+		var time = Date.now() * 0.005, i, i3,
+			sizes = geometry.attributes.size.array,
+			positions = geometry.attributes.position.array;
 
-		for ( var i = 0, i3 = 0; i < num; i++, i3 += 3) {
+		for (i = 0, i3 = 0; i < num; i++, i3 += 3) {
 			particles[i].update(position, !stopped);
 			positions[i3 + 0] = particles[i].getPosition().x - position.x;
 			positions[i3 + 1] = particles[i].getPosition().y - position.y;
