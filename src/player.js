@@ -112,11 +112,10 @@ var Player = function () {
 			input.update(ticks);
 			morph.update();
 			entity.update(dt, applyForce, applyDamping);
-			if (!morph.isMan()) {
-				flame.updatePosition(entity.getPoints()[1]);
-			}
 		}
 
+		if (!morph.isMan())
+			flame.updatePosition(entity.getPoints()[1]);
 		flame.update();
 	};
 
@@ -143,7 +142,7 @@ var Player = function () {
 		input.removeAllListeners('input.move'); // there can be only one
 		input.on('input.move', handleInput);
 		entity.reset(conf.spawn.x, conf.spawn.y);
-		flame.stop();
+		flame.clear();
 	};
 
 	this.getFlame = function () {
