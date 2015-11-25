@@ -1,6 +1,26 @@
 'use strict';
 
-var _ = require('underscore'),
+var vert = `
+attribute float size;
+attribute vec3 customColor;
+varying vec3 vColor;
+void main() {
+	vColor = customColor;
+	vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+	gl_PointSize = size;
+	gl_Position = projectionMatrix * mvPosition;
+}`;
+
+var frag = `
+uniform vec3 color;
+uniform sampler2D texture;
+varying vec3 vColor;
+void main() {
+	gl_FragColor = vec4( color * vColor, 1.0 );
+}`;
+
+var $ = require('jquery'),
+	_ = require('underscore'),
 	THREE = require('three');
 
 var Particle = function () {
@@ -60,8 +80,8 @@ module.exports = function () {
 
 	var shaderMaterial = new THREE.ShaderMaterial({
 		uniforms: { color: { type: 'c', value: new THREE.Color(0xffffff) } },
-		vertexShader: document.getElementById('vertexshader').textContent,
-		fragmentShader: document.getElementById('fragmentshader').textContent,
+		vertexShader: vert,
+		fragmentShader: frag,
 
 		blending: THREE.AdditiveBlending,
 		depthTest: true,
