@@ -13,16 +13,16 @@ var Particle = function () {
 	};
 
 	this.update = function (p, stopped) {
-		life -= 0.04;
+		life -= 0.008;
 		// position.x += velocity.x;
 		// position.y += velocity.y;
-		if (life < 0) {
+		if (life <= 0) {
 			position.set(p.x, p.y, 10);
 			velocity.x = 0;
 			velocity.y = Math.random() * 0.06;
 			position.x += Math.random() * 0.2 * dir();
 			position.y += Math.random() * 0.2 * dir();
-			life = 1;// Math.random();// + 0.5;
+			life = Math.random();
 			if (stopped) {
 				position.z = -10.0;
 			} else {
@@ -32,7 +32,9 @@ var Particle = function () {
 	};
 
 	this.hide = function () {
-		// life = -1.0;
+		// for some reason this needs to greater than the life reduction per iteration
+		// but less than 2* the life reduction... fix it!
+		life = 0.009;
 	};
 
 	this.getPosition = function () {
@@ -40,7 +42,7 @@ var Particle = function () {
 	};
 
 	this.getSize = function () {
-		return life * 7;
+		return life * 10;
 	};
 };
 // --end particle
@@ -49,7 +51,7 @@ module.exports = function () {
 	var particleSystem,
 		geometry,
 		stopped = true,
-		num = 5,// number of particles
+		num = 50,// number of particles
 		positions = new Float32Array(num * 3),
 		colors = new Float32Array(num * 3),
 		sizes = new Float32Array(num),
