@@ -114,8 +114,7 @@ var Player = function () {
 			entity.update(dt, applyForce, applyDamping);
 		}
 
-		if (!morph.isMan())
-			flame.updatePosition(entity.getPoints()[1]);
+		flame.updatePosition(entity.getPoints()[1]);
 		flame.update();
 	};
 

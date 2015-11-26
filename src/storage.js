@@ -33,7 +33,6 @@ module.exports = function () {
 				reps = s('replays', reps);
 				if (!reps) {
 					reps = replay_default;
-					console.log('default replays loaded');
 				}
 				replays = [];
 				_.each(reps, function (r) {

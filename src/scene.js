@@ -73,6 +73,10 @@ module.exports = function () {
 	document.body.appendChild(renderer.domElement);
 
 	return {
+		getCameraPosition: function () {
+			return cam.position;// TODO: return a copy
+		},
+
 		render: function () {
 			renderer.render(scene, cam);
 		},

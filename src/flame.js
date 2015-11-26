@@ -13,7 +13,6 @@ void main() {
 
 var frag = `
 uniform vec3 color;
-uniform sampler2D texture;
 varying vec3 vColor;
 void main() {
 	gl_FragColor = vec4( color * vColor, 1.0 );
@@ -21,40 +20,39 @@ void main() {
 
 var $ = require('jquery'),
 	_ = require('underscore'),
-	THREE = require('three');
+	THREE = require('three'),
+	scene = require('./scene');
 
 var Particle = function () {
 	var position = new THREE.Vector3(0, 0, 0),
-		velocity = new THREE.Vector2(0, 0.05),
-		life = Math.random();
+		life = 0;
 
 	var dir = function () {
 		return Math.random() < 0.5 ? -1.0 : 1.0;
 	};
 
-	this.update = function (p, stopped) {
+	this.update = function (p) {
 		life -= 0.008;
-		// position.x += velocity.x;
-		// position.y += velocity.y;
 		if (life <= 0) {
-			position.set(p.x, p.y, 10);
-			velocity.x = 0;
-			velocity.y = Math.random() * 0.06;
-			position.x += Math.random() * 0.2 * dir();
-			position.y += Math.random() * 0.2 * dir();
+			position.x = p.x + Math.random() * 0.2 * dir();
+			position.y = p.y + Math.random() * 0.2 * dir();
 			life = Math.random();
-			if (stopped) {
-				position.z = -10.0;
+			if (this.respawn) {
+				position.z = 0;
 			} else {
-				position.z = 0.0;
+				position.z = -10;
 			}
 		}
 	};
 
+	this.respawn = false;
+
 	this.hide = function () {
-		// for some reason this needs to greater than the life reduction per iteration
+		// for some reason this needs to be greater than the life reduction per iteration
 		// but less than 2* the life reduction... fix it!
 		life = 0.009;
+
+		this.respawn = false;
 	};
 
 	this.getPosition = function () {
@@ -70,7 +68,6 @@ var Particle = function () {
 module.exports = function () {
 	var particleSystem,
 		geometry,
-		stopped = true,
 		num = 50,// number of particles
 		positions = new Float32Array(num * 3),
 		colors = new Float32Array(num * 3),
@@ -111,33 +108,35 @@ module.exports = function () {
 	this.particleSystem = particleSystem;
 
 	this.stop = function () {
-		stopped = true;
+		_.each(particles, function (p) {
+			p.respawn = false;
+		});
 	},
 
 	this.start = function () {
-		stopped = false;
+		_.each(particles, function (p) {
+			p.respawn = true;
+		});
 	},
 
 	this.clear = function () {
-		stopped = true;
 		_.each(particles, function (p) {
 			p.hide();
 		});
 	},
 
 	this.updatePosition = function (pos) {
-		position.set(pos.x, pos.y);
-		particleSystem.position.set(pos.x, pos.y, 0);
+		position.set(pos.x, pos.y);// where to spawn new particles from(this is the missiles tail pipe)
+		particleSystem.position.set(scene.getCameraPosition().x, scene.getCameraPosition().y, 0);
 	};
 
 	this.update = function () {
 		var i, i3, sizes = geometry.attributes.size.array,
 			positions = geometry.attributes.position.array;
-
 		for (i = 0, i3 = 0; i < num; i++, i3 += 3) {
-			particles[i].update(position, stopped);
-			positions[i3 + 0] = particles[i].getPosition().x - position.x;
-			positions[i3 + 1] = particles[i].getPosition().y - position.y;
+			particles[i].update(position);
+			positions[i3 + 0] = particles[i].getPosition().x - scene.getCameraPosition().x;
+			positions[i3 + 1] = particles[i].getPosition().y - scene.getCameraPosition().y;
 			positions[i3 + 2] = particles[i].getPosition().z;
 			sizes[i] = particles[i].getSize();
 		}
