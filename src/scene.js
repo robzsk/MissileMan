@@ -51,7 +51,7 @@ const zoom = 1;
 const windowWidth = window.innerWidth;
 const windowHeight = window.innerHeight;
 
-var Scene = function () {
+module.exports = function () {
 	var scene = new THREE.Scene(),
 		// cam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 26 - 9, 26),
 		cam = new THREE.OrthographicCamera(windowWidth * zoom / -2, windowWidth * zoom / 2, windowHeight * zoom / 2, windowHeight * zoom / -2, 0, 1),
@@ -72,36 +72,35 @@ var Scene = function () {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	document.body.appendChild(renderer.domElement);
 
-	this.render = function () {
-		renderer.render(scene, cam);
+	return {
+		render: function () {
+			renderer.render(scene, cam);
+		},
+
+		add: function (m) {
+			scene.add(m);
+		},
+
+		follow: function (p) {
+			var e;
+			return function (p) {
+				e = edge.get(p);
+				cam.position.set(e.x, e.y, zoom);
+			};
+		}(),
+
+		remove: function (m) {
+			scene.remove(m);
+		},
+
+		clear: function () {
+			var children = _.clone(scene.children);
+			_.each(children, function (child) {
+				if (child !== ambientLight) {
+					scene.remove(child);
+				}
+
+			});
+		}
 	};
-
-	this.add = function (m) {
-		scene.add(m);
-	};
-
-	this.follow = function (p) {
-		var e;
-		return function (p) {
-			e = edge.get(p);
-			cam.position.set(e.x, e.y, zoom);
-		};
-	}();
-
-	this.remove = function (m) {
-		scene.remove(m);
-	};
-
-	this.clear = function () {
-		var children = _.clone(scene.children);
-		_.each(children, function (child) {
-			if (child !== ambientLight) {
-				scene.remove(child);
-			}
-
-		});
-	};
-
-};
-
-module.exports = Scene;
+}();

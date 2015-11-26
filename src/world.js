@@ -6,12 +6,11 @@ var _ = require('underscore'),
 
 var World = function () {
 	const assets = require('./assets'),
-		Scene = require('./scene'),
+		scene = require('./scene'),
 		Map = require('./engine/map'),
 		Line = require('./engine/line');
 
 	var self = this,
-		scene = new Scene(),
 		map = new Map(),
 		players = [],
 		targets = [],
