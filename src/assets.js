@@ -76,8 +76,8 @@ var meshConfigs = [
 	{ name: 'empty', file: 'empty', color: 0x3e3e3e },
 	{ name: 'solid', color: 0x3e3e3e },
 	{ name: 'target', file: 'solid', color: 0xac4442 },
-	{ name: 'man' },
-	{ name: 'missile' }
+	{ name: 'man', file: 'player' },
+	{ name: 'missile', file: 'player' }
 ];
 
 module.exports = function () {
@@ -128,8 +128,20 @@ module.exports = function () {
 			},
 
 			missile: function () {
-				return mesh['missile'].clone();
-			}
+				var ret;
+				var create = function () {
+					if (!ret) {
+						ret = mesh['missile'].clone();
+						ret.rotation.set(0, 0, Math.PI);
+						ret.updateMatrix();
+						ret.geometry.applyMatrix(ret.matrix);
+					}
+					return ret.clone();
+				};
+				return function () {
+					return create();
+				};
+			}()
 		};
 
 		this.level = {

@@ -15,10 +15,10 @@ const MISSILE_MAX_SPEED = 10.0,
 	JUMP_FORCE = 1500,
 	GRAVITY = 100;
 
-const RADIUS = 0.25;
+const RADIUS = 0.2;
 const points = [
-	{ x: 0, y: 0.25, z: 0, r: RADIUS, rs: RADIUS * RADIUS },
-	{ x: 0, y: -0.25, z: 0, r: RADIUS, rs: RADIUS * RADIUS }
+	{ x: 0, y: 0.32, z: 0, r: RADIUS, rs: RADIUS * RADIUS },
+	{ x: 0, y: -0.32, z: 0, r: RADIUS, rs: RADIUS * RADIUS }
 ];
 
 var Player = function () {
@@ -114,8 +114,7 @@ var Player = function () {
 			entity.update(dt, applyForce, applyDamping);
 		}
 
-		flame.updatePosition(entity.getPoints()[1]);
-		flame.update();
+		flame.update(entity.getPoints()[1], entity.rotation().z);
 	};
 
 	this.getScale = function () {

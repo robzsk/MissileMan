@@ -1,81 +1,45 @@
 module.exports = {
-	missile: {
-		'vertices': [-0.25, 0.5, -0, 0.25, 0.5, -0, -0.25, -0.5, 0, 0.25, -0.5, -0, -0.25, -0.1, -0, 0.25, -0.1, -0],
-		'faces': [3, 4, 2, 3, 5, 1, 3, 0, 4, 5, 1, 0],
-		'name': 'CubeGeometry.5',
-		'metadata': {
-			'version': 3,
-			'vertices': 6,
-			'type': 'Geometry',
-			'faces': 2,
-			'materials': 2,
-			'generator': 'io_three'
-		},
+	player: {
+		'name': 'CubeGeometry.3',
 		'materials': [{
-			'shading': 'lambert',
-			'depthTest': true,
-			'opacity': 1,
-			'wireframe': false,
 			'transparent': false,
-			'colorDiffuse': [1, 1, 1],
-			'DbgName': 'Body',
-			'depthWrite': true,
-			'blending': 'NormalBlending',
 			'DbgIndex': 0,
-			'colorEmissive': [1, 1, 1],
-			'visible': true
-		}, {
-			'shading': 'lambert',
-			'depthTest': true,
-			'opacity': 1,
-			'wireframe': false,
-			'transparent': false,
-			'colorDiffuse': [0.015066, 0.023716, 1],
-			'DbgName': 'Head',
-			'depthWrite': true,
 			'blending': 'NormalBlending',
-			'DbgIndex': 1,
-			'colorEmissive': [0.015066, 0.023716, 1],
-			'visible': true
-		}]
-	},
-	man: {
-		'materials': [{
+			'colorEmissive': [0, 0, 0],
+			'wireframe': false,
+			'DbgName': 'Body',
+			'shading': 'lambert',
 			'colorDiffuse': [1, 1, 1],
-			'transparent': false,
-			'depthTest': true,
 			'depthWrite': true,
-			'blending': 'NormalBlending',
-			'wireframe': false,
-			'colorEmissive': [1, 1, 1],
-			'opacity': 1,
-			'shading': 'lambert',
+			'depthTest': true,
 			'visible': true,
-			'DbgName': 'Body'
+			'opacity': 1
 		}, {
-			'colorDiffuse': [0.015066, 0.023716, 1],
 			'transparent': false,
-			'depthTest': true,
-			'depthWrite': true,
+			'DbgIndex': 1,
 			'blending': 'NormalBlending',
+			'colorEmissive': [0, 0, 0],
 			'wireframe': false,
-			'colorEmissive': [0.015066, 0.023716, 1],
-			'opacity': 1,
+			'DbgName': 'Head',
 			'shading': 'lambert',
+			'colorDiffuse': [0.020902, 0.031663, 0.846154],
+			'depthWrite': true,
+			'depthTest': true,
 			'visible': true,
-			'DbgName': 'Head'
+			'opacity': 1
 		}],
+		'normals': [0, 0, 1],
 		'metadata': {
-			'faces': 2,
-			'materials': 2,
-			'version': 3,
+			'normals': 1,
 			'generator': 'io_three',
-			'vertices': 6,
-			'type': 'Geometry'
+			'materials': 2,
+			'type': 'Geometry',
+			'version': 3,
+			'faces': 2,
+			'vertices': 6
 		},
-		'faces': [3, 4, 2, 3, 5, 1, 3, 0, 4, 5, 1, 0],
-		'vertices': [0.25, -0.5, -0, -0.25, -0.5, -0, 0.25, 0.5, 0, -0.25, 0.5, -0, 0.25, 0.1, -0, -0.25, 0.1, -0],
-		'name': 'CubeGeometry'
+		'vertices': [0.169947, -0.50984, -0, -0.169947, -0.50984, -0, -0.169947, 0.50984, -0, 0.169947, 0.50984, 0, -0.169947, 0.169947, -0, 0.169947, 0.169947, -0],
+		'faces': [35, 5, 3, 2, 4, 1, 0, 0, 0, 0, 35, 0, 5, 4, 1, 0, 0, 0, 0, 0]
 	},
 	empty: {
 		'metadata': {

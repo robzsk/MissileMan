@@ -1,17 +1,31 @@
 'use strict';
 
 var vert = `
-attribute float size;
+float quarticOut(float t) {
+  return pow(t - 1.0, 3.0) * (1.0 - t) + 1.0;
+}
+float exponentialOut(float t) {
+  return t == 1.0 ? t : 1.0 - pow(2.0, -10.0 * t);
+}
+
+attribute vec2 velocity;
+attribute float time;
+varying float vTime;
 void main() {
-	vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-	gl_PointSize = size;
+	vTime = time;
+	vec3 pos = vec3(position);
+	pos.x = position.x + (exponentialOut(time) * velocity.x);
+	pos.y = position.y + (exponentialOut(time) * velocity.y);
+	vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+	gl_PointSize = 7.0;
 	gl_Position = projectionMatrix * mvPosition;
 }`;
 
 var frag = `
 uniform sampler2D transitions;
+varying float vTime;
 void main() {
-	gl_FragColor = texture2D(transitions, vec2(0, 0.001));
+	gl_FragColor = texture2D(transitions, vec2(vTime, 0));
 }`;
 
 var $ = require('jquery'),
@@ -19,21 +33,33 @@ var $ = require('jquery'),
 	THREE = require('three'),
 	scene = require('./scene');
 
+var TOTAL = 150;
+
 var Particle = function () {
-	var position = new THREE.Vector3(0, 0, 0),
-		life = 0;
+	var position = new THREE.Vector3(0, 0, 0), velocity = new THREE.Vector2(0, 0.5),
+		time = 0, inc;
 
 	var dir = function () {
 		return Math.random() < 0.5 ? -1.0 : 1.0;
 	};
 
-	this.update = function (p) {
-		life -= 0.008;
-		if (life <= 0) {
-			position.x = p.x + Math.random() * 0.2 * dir();
-			position.y = p.y + Math.random() * 0.2 * dir();
-			life = Math.random();
-			if (this.respawn) {
+	var setInc = function () {
+		inc = 0.005 + (Math.random() * 0.05);
+	};
+
+	setInc();
+
+	this.update = function (p, a) {
+		if (!started) return;
+		time += inc;
+		if (time >= 1) {
+			setInc();
+			velocity.x = -Math.cos(a + 1.5708);// could move these to the shader...
+			velocity.y = -Math.sin(a + 1.5708);// + 90 degrees in radians
+			position.x = p.x + Math.random() * 0.1 * dir();
+			position.y = p.y + Math.random() * 0.1 * dir();
+			time = 0.0;
+			if (respawn) {
 				position.z = 0;
 			} else {
 				position.z = -10;
@@ -41,22 +67,30 @@ var Particle = function () {
 		}
 	};
 
-	this.respawn = false;
+	var started = false, respawn = false;
+	this.start = function () {
+		started = true;
+		respawn = true;
+	};
+	this.stop = function () {
+		respawn = false;
+	};
 
-	this.hide = function () {
-		// for some reason this needs to be greater than the life reduction per iteration
-		// but less than 2* the life reduction... fix it!
-		life = 0.009;
-
-		this.respawn = false;
+	this.clear = function () {
+		time = 1;
+		respawn = false;
 	};
 
 	this.getPosition = function () {
 		return position;
 	};
 
-	this.getSize = function () {
-		return life * 10;
+	this.getVelocity = function () {
+		return velocity;
+	};
+
+	this.getTime = function () {
+		return time;
 	};
 };
 // --end particle
@@ -64,11 +98,11 @@ var Particle = function () {
 module.exports = function () {
 	var particleSystem,
 		geometry,
-		num = 50,// number of particles
-		positions = new Float32Array(num * 3),
-		sizes = new Float32Array(num),
+		positions = new Float32Array(TOTAL * 3),
+		velocities = new Float32Array(TOTAL * 2),
+		times = new Float32Array(TOTAL), // each particle has one life
 		particles = [],
-		position = new THREE.Vector2(), i, i3;
+		i, i2, i3;
 
 	var shaderMaterial = new THREE.ShaderMaterial({
 		uniforms: {
@@ -85,16 +119,19 @@ module.exports = function () {
 
 	geometry = new THREE.BufferGeometry();
 
-	for (i = 0, i3 = 0; i < num; i++, i3 += 3) {
+	for (i = 0, i2 = 0, i3 = 0; i < TOTAL; i++, i2 += 2, i3 += 3) {
 		positions[i3 + 0] = 0;
 		positions[i3 + 1] = 0;
 		positions[i3 + 2] = 0;
-		sizes[i] = 0;
+		velocities[i2 + 0] = 0;
+		velocities[i2 + 1] = 0;
+		times[i] = 0;
 		particles.push(new Particle());
 	}
 
 	geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
-	geometry.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
+	geometry.addAttribute('velocity', new THREE.BufferAttribute(velocities, 2));
+	geometry.addAttribute('time', new THREE.BufferAttribute(times, 1));
 
 	particleSystem = new THREE.Points(geometry, shaderMaterial);
 
@@ -102,40 +139,44 @@ module.exports = function () {
 
 	this.stop = function () {
 		_.each(particles, function (p) {
-			p.respawn = false;
+			p.stop();
 		});
 	},
 
 	this.start = function () {
 		_.each(particles, function (p) {
-			p.respawn = true;
+			p.start();
 		});
 	},
 
 	this.clear = function () {
 		_.each(particles, function (p) {
-			p.hide();
+			p.clear();
 		});
 	},
 
-	this.updatePosition = function (pos) {
-		position.set(pos.x, pos.y);// where to spawn new particles from(this is the missiles tail pipe)
-		particleSystem.position.set(scene.getCameraPosition().x, scene.getCameraPosition().y, 0);
-	};
+	this.updatePosition = function () {};
 
-	this.update = function () {
-		var i, i3, sizes = geometry.attributes.size.array,
+	// TODO: check can we pass in the updatePosition params here and remove the updatePosition method?
+	this.update = function (pos, angle) {
+		var i, i3, times = geometry.attributes.time.array,
 			positions = geometry.attributes.position.array;
-		for (i = 0, i3 = 0; i < num; i++, i3 += 3) {
-			particles[i].update(position);
+
+		particleSystem.position.set(scene.getCameraPosition().x, scene.getCameraPosition().y, 0);
+
+		for (i = 0, i2 = 0, i3 = 0; i < TOTAL; i++, i2 += 2, i3 += 3) {
+			particles[i].update(pos, angle);
 			positions[i3 + 0] = particles[i].getPosition().x - scene.getCameraPosition().x;
 			positions[i3 + 1] = particles[i].getPosition().y - scene.getCameraPosition().y;
 			positions[i3 + 2] = particles[i].getPosition().z;
-			sizes[i] = particles[i].getSize();
+			velocities[i2 + 0] = particles[i].getVelocity().x;
+			velocities[i2 + 1] = particles[i].getVelocity().y;
+			times[i] = particles[i].getTime();
 		}
 
-		geometry.attributes.size.needsUpdate = true;
+		geometry.attributes.time.needsUpdate = true;
 		geometry.attributes.position.needsUpdate = true;
+		geometry.attributes.velocity.needsUpdate = true;
 	};
 
 };
