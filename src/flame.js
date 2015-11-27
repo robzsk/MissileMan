@@ -2,20 +2,16 @@
 
 var vert = `
 attribute float size;
-attribute vec3 customColor;
-varying vec3 vColor;
 void main() {
-	vColor = customColor;
 	vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
 	gl_PointSize = size;
 	gl_Position = projectionMatrix * mvPosition;
 }`;
 
 var frag = `
-uniform vec3 color;
-varying vec3 vColor;
+uniform sampler2D transitions;
 void main() {
-	gl_FragColor = vec4( color * vColor, 1.0 );
+	gl_FragColor = texture2D(transitions, vec2(0, 0.001));
 }`;
 
 var $ = require('jquery'),
@@ -70,13 +66,14 @@ module.exports = function () {
 		geometry,
 		num = 50,// number of particles
 		positions = new Float32Array(num * 3),
-		colors = new Float32Array(num * 3),
 		sizes = new Float32Array(num),
 		particles = [],
 		position = new THREE.Vector2(), i, i3;
 
 	var shaderMaterial = new THREE.ShaderMaterial({
-		uniforms: { color: { type: 'c', value: new THREE.Color(0xffffff) } },
+		uniforms: {
+			transitions: { type: 't', value: THREE.ImageUtils.loadTexture('assets/textures/transitions.png') }
+		},
 		vertexShader: vert,
 		fragmentShader: frag,
 
@@ -92,15 +89,11 @@ module.exports = function () {
 		positions[i3 + 0] = 0;
 		positions[i3 + 1] = 0;
 		positions[i3 + 2] = 0;
-		colors[i3 + 0] = 0.2;
-		colors[i3 + 1] = 0.2;
-		colors[i3 + 2] = 1;
 		sizes[i] = 0;
 		particles.push(new Particle());
 	}
 
 	geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
-	geometry.addAttribute('customColor', new THREE.BufferAttribute(colors, 3));
 	geometry.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
 	particleSystem = new THREE.Points(geometry, shaderMaterial);
