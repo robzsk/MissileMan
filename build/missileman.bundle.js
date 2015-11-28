@@ -60,7 +60,7 @@
 				loadLevel();
 				setupPlayers();
 			}
-		}, 20);
+		}, 1000);
 	});
 
 	overlay.on('title.playbutton.click', function () {
@@ -85,7 +85,7 @@
 	});
 })();
 
-},{"./src/assets":12,"./src/engine/loop":16,"./src/overlay":22,"./src/replays":24,"./src/world":27,"jquery":8,"underscore":11}],2:[function(require,module,exports){
+},{"./src/assets":12,"./src/engine/loop":16,"./src/overlay":21,"./src/replays":25,"./src/world":28,"jquery":8,"underscore":11}],2:[function(require,module,exports){
 /**
  * BezierEasing - use bezier curve for transition easing function
  * by Gaëtan Renaudeau 2014 - 2015 – MIT License
@@ -48500,8 +48500,8 @@ var meshConfigs = [
 	{ name: 'empty', file: 'empty', color: 0x3e3e3e },
 	{ name: 'solid', color: 0x3e3e3e },
 	{ name: 'target', file: 'solid', color: 0xac4442 },
-	{ name: 'man' },
-	{ name: 'missile' }
+	{ name: 'man', file: 'player' },
+	{ name: 'missile', file: 'player' }
 ];
 
 module.exports = function () {
@@ -48552,8 +48552,20 @@ module.exports = function () {
 			},
 
 			missile: function () {
-				return mesh['missile'].clone();
-			}
+				var ret;
+				var create = function () {
+					if (!ret) {
+						ret = mesh['missile'].clone();
+						ret.rotation.set(0, 0, Math.PI);
+						ret.updateMatrix();
+						ret.geometry.applyMatrix(ret.matrix);
+					}
+					return ret.clone();
+				};
+				return function () {
+					return create();
+				};
+			}()
 		};
 
 		this.level = {
@@ -48566,7 +48578,7 @@ module.exports = function () {
 	return new Assets();
 }();
 
-},{"./models.js":20,"three":10,"underscore":11}],13:[function(require,module,exports){
+},{"./models.js":19,"three":10,"underscore":11}],13:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore'),
@@ -49016,234 +49028,48 @@ module.exports = function (current, rotation, direction) {
 };
 
 },{"three":10}],19:[function(require,module,exports){
-'use strict';
-
-var vert = `
-attribute float size;
-attribute vec3 customColor;
-varying vec3 vColor;
-void main() {
-	vColor = customColor;
-	vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-	gl_PointSize = size;
-	gl_Position = projectionMatrix * mvPosition;
-}`;
-
-var frag = `
-uniform vec3 color;
-varying vec3 vColor;
-void main() {
-	gl_FragColor = vec4( color * vColor, 1.0 );
-}`;
-
-var $ = require('jquery'),
-	_ = require('underscore'),
-	THREE = require('three'),
-	scene = require('./scene');
-
-var Particle = function () {
-	var position = new THREE.Vector3(0, 0, 0),
-		life = 0;
-
-	var dir = function () {
-		return Math.random() < 0.5 ? -1.0 : 1.0;
-	};
-
-	this.update = function (p) {
-		life -= 0.008;
-		if (life <= 0) {
-			position.x = p.x + Math.random() * 0.2 * dir();
-			position.y = p.y + Math.random() * 0.2 * dir();
-			life = Math.random();
-			if (this.respawn) {
-				position.z = 0;
-			} else {
-				position.z = -10;
-			}
-		}
-	};
-
-	this.respawn = false;
-
-	this.hide = function () {
-		// for some reason this needs to be greater than the life reduction per iteration
-		// but less than 2* the life reduction... fix it!
-		life = 0.009;
-
-		this.respawn = false;
-	};
-
-	this.getPosition = function () {
-		return position;
-	};
-
-	this.getSize = function () {
-		return life * 10;
-	};
-};
-// --end particle
-
-module.exports = function () {
-	var particleSystem,
-		geometry,
-		num = 50,// number of particles
-		positions = new Float32Array(num * 3),
-		colors = new Float32Array(num * 3),
-		sizes = new Float32Array(num),
-		particles = [],
-		position = new THREE.Vector2(), i, i3;
-
-	var shaderMaterial = new THREE.ShaderMaterial({
-		uniforms: { color: { type: 'c', value: new THREE.Color(0xffffff) } },
-		vertexShader: vert,
-		fragmentShader: frag,
-
-		blending: THREE.AdditiveBlending,
-		depthTest: true,
-		transparent: true
-
-	});
-
-	geometry = new THREE.BufferGeometry();
-
-	for (i = 0, i3 = 0; i < num; i++, i3 += 3) {
-		positions[i3 + 0] = 0;
-		positions[i3 + 1] = 0;
-		positions[i3 + 2] = 0;
-		colors[i3 + 0] = 0.2;
-		colors[i3 + 1] = 0.2;
-		colors[i3 + 2] = 1;
-		sizes[i] = 0;
-		particles.push(new Particle());
-	}
-
-	geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
-	geometry.addAttribute('customColor', new THREE.BufferAttribute(colors, 3));
-	geometry.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-	particleSystem = new THREE.Points(geometry, shaderMaterial);
-
-	this.particleSystem = particleSystem;
-
-	this.stop = function () {
-		_.each(particles, function (p) {
-			p.respawn = false;
-		});
-	},
-
-	this.start = function () {
-		_.each(particles, function (p) {
-			p.respawn = true;
-		});
-	},
-
-	this.clear = function () {
-		_.each(particles, function (p) {
-			p.hide();
-		});
-	},
-
-	this.updatePosition = function (pos) {
-		position.set(pos.x, pos.y);// where to spawn new particles from(this is the missiles tail pipe)
-		particleSystem.position.set(scene.getCameraPosition().x, scene.getCameraPosition().y, 0);
-	};
-
-	this.update = function () {
-		var i, i3, sizes = geometry.attributes.size.array,
-			positions = geometry.attributes.position.array;
-		for (i = 0, i3 = 0; i < num; i++, i3 += 3) {
-			particles[i].update(position);
-			positions[i3 + 0] = particles[i].getPosition().x - scene.getCameraPosition().x;
-			positions[i3 + 1] = particles[i].getPosition().y - scene.getCameraPosition().y;
-			positions[i3 + 2] = particles[i].getPosition().z;
-			sizes[i] = particles[i].getSize();
-		}
-
-		geometry.attributes.size.needsUpdate = true;
-		geometry.attributes.position.needsUpdate = true;
-	};
-
-};
-
-},{"./scene":25,"jquery":8,"three":10,"underscore":11}],20:[function(require,module,exports){
 module.exports = {
-	missile: {
-		'vertices': [-0.25, 0.5, -0, 0.25, 0.5, -0, -0.25, -0.5, 0, 0.25, -0.5, -0, -0.25, -0.1, -0, 0.25, -0.1, -0],
-		'faces': [3, 4, 2, 3, 5, 1, 3, 0, 4, 5, 1, 0],
-		'name': 'CubeGeometry.5',
-		'metadata': {
-			'version': 3,
-			'vertices': 6,
-			'type': 'Geometry',
-			'faces': 2,
-			'materials': 2,
-			'generator': 'io_three'
-		},
+	player: {
+		'name': 'CubeGeometry.3',
 		'materials': [{
-			'shading': 'lambert',
-			'depthTest': true,
-			'opacity': 1,
-			'wireframe': false,
 			'transparent': false,
-			'colorDiffuse': [1, 1, 1],
-			'DbgName': 'Body',
-			'depthWrite': true,
-			'blending': 'NormalBlending',
 			'DbgIndex': 0,
-			'colorEmissive': [1, 1, 1],
-			'visible': true
-		}, {
-			'shading': 'lambert',
-			'depthTest': true,
-			'opacity': 1,
-			'wireframe': false,
-			'transparent': false,
-			'colorDiffuse': [0.015066, 0.023716, 1],
-			'DbgName': 'Head',
-			'depthWrite': true,
 			'blending': 'NormalBlending',
-			'DbgIndex': 1,
-			'colorEmissive': [0.015066, 0.023716, 1],
-			'visible': true
-		}]
-	},
-	man: {
-		'materials': [{
+			'colorEmissive': [0, 0, 0],
+			'wireframe': false,
+			'DbgName': 'Body',
+			'shading': 'lambert',
 			'colorDiffuse': [1, 1, 1],
-			'transparent': false,
-			'depthTest': true,
 			'depthWrite': true,
-			'blending': 'NormalBlending',
-			'wireframe': false,
-			'colorEmissive': [1, 1, 1],
-			'opacity': 1,
-			'shading': 'lambert',
+			'depthTest': true,
 			'visible': true,
-			'DbgName': 'Body'
+			'opacity': 1
 		}, {
-			'colorDiffuse': [0.015066, 0.023716, 1],
 			'transparent': false,
-			'depthTest': true,
-			'depthWrite': true,
+			'DbgIndex': 1,
 			'blending': 'NormalBlending',
+			'colorEmissive': [0, 0, 0],
 			'wireframe': false,
-			'colorEmissive': [0.015066, 0.023716, 1],
-			'opacity': 1,
+			'DbgName': 'Head',
 			'shading': 'lambert',
+			'colorDiffuse': [0.169, 0.367, 0.91],
+			'depthWrite': true,
+			'depthTest': true,
 			'visible': true,
-			'DbgName': 'Head'
+			'opacity': 1
 		}],
+		'normals': [0, 0, 1],
 		'metadata': {
-			'faces': 2,
-			'materials': 2,
-			'version': 3,
+			'normals': 1,
 			'generator': 'io_three',
-			'vertices': 6,
-			'type': 'Geometry'
+			'materials': 2,
+			'type': 'Geometry',
+			'version': 3,
+			'faces': 2,
+			'vertices': 6
 		},
-		'faces': [3, 4, 2, 3, 5, 1, 3, 0, 4, 5, 1, 0],
-		'vertices': [0.25, -0.5, -0, -0.25, -0.5, -0, 0.25, 0.5, 0, -0.25, 0.5, -0, 0.25, 0.1, -0, -0.25, 0.1, -0],
-		'name': 'CubeGeometry'
+		'vertices': [0.169947, -0.50984, -0, -0.169947, -0.50984, -0, -0.169947, 0.50984, -0, 0.169947, 0.50984, 0, -0.169947, 0.169947, -0, 0.169947, 0.169947, -0],
+		'faces': [35, 5, 3, 2, 4, 1, 0, 0, 0, 0, 35, 0, 5, 4, 1, 0, 0, 0, 0, 0]
 	},
 	empty: {
 		'metadata': {
@@ -49279,7 +49105,7 @@ module.exports = {
 	}
 };
 
-},{}],21:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var easing = require('bezier-easing');
@@ -49357,7 +49183,7 @@ var Morph = function (changeToMan, changeToMissile) {
 
 module.exports = Morph;
 
-},{"bezier-easing":2}],22:[function(require,module,exports){
+},{"bezier-easing":2}],21:[function(require,module,exports){
 'use strict';
 
 var $ = require('jquery'),
@@ -49432,13 +49258,350 @@ util.inherits(Overlay, EventEmitter);
 
 module.exports = Overlay;
 
-},{"./engine/input":14,"events":3,"jquery":8,"util":7}],23:[function(require,module,exports){
+},{"./engine/input":14,"events":3,"jquery":8,"util":7}],22:[function(require,module,exports){
+'use strict';
+
+var vert = `
+
+float exponentialOut(float t) {
+  return t == 1.0 ? t : 1.0 - pow(2.0, -10.0 * t);
+}
+
+attribute vec2 velocity;
+attribute float time;
+varying float vTime;
+void main() {
+	vTime = time;
+	vec3 pos = vec3(position);
+	pos.x = position.x + (exponentialOut(time) * 3.0 * velocity.x);
+	pos.y = position.y + (exponentialOut(time) * 3.0 * velocity.y);
+	vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+	gl_PointSize = (exponentialOut(time)) * 25.0;
+	gl_Position = projectionMatrix * mvPosition;
+}`;
+
+var frag = `
+
+float cubicOut(float t) {
+  float f = t - 1.0;
+  return f * f * f + 1.0;
+}
+varying float vTime;
+void main() {
+	gl_FragColor = vec4(0.169,0.367,0.91,cubicOut(1.0-vTime));
+}`;
+
+var _ = require('underscore'),
+	THREE = require('three'),
+	scene = require('../scene');
+
+var TOTAL = 20;
+
+var Particle = function () {
+	var velocity = new THREE.Vector2(0, 0), time = 0, inc = 0.005 + (Math.random() * 0.05);
+
+	this.init = function (angle) {
+		// could move this to the shader
+		velocity.x = Math.cos(angle) * Math.random() * 0.75;
+		velocity.y = Math.sin(angle) * Math.random() * 0.75;
+		time = 0;
+	};
+
+	this.getVelocity = function () {
+		return velocity;
+	};
+
+	this.update = function () {
+		time += inc;
+	};
+
+	this.getTime = function () {
+		return time;
+	};
+
+};
+// --end particle
+
+module.exports = function () {
+	var particleSystem,
+		geometry,
+		position = new THREE.Vector3(0, 0, 0),
+		positions = new Float32Array(TOTAL * 3),
+		velocities = new Float32Array(TOTAL * 2),
+		times = new Float32Array(TOTAL), // each particle has one life
+		particles = [],
+		i, i2, i3, time, inc = 0.002;
+
+	var shaderMaterial = new THREE.ShaderMaterial({
+		uniforms: { },
+		vertexShader: vert,
+		fragmentShader: frag,
+
+		blending: THREE.AdditiveBlending,
+		depthTest: true,
+		transparent: true
+
+	});
+
+	geometry = new THREE.BufferGeometry();
+
+	for (i = 0, i2 = 0, i3 = 0; i < TOTAL; i++, i2 += 2, i3 += 3) {
+		positions[i3 + 0] = 0;
+		positions[i3 + 1] = 0;
+		positions[i3 + 2] = 0;
+		velocities[i2 + 0] = 0;
+		velocities[i2 + 1] = 0;
+		times[i] = 0;
+		particles.push(new Particle());
+	}
+
+	geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
+	geometry.addAttribute('velocity', new THREE.BufferAttribute(velocities, 2));
+	geometry.addAttribute('time', new THREE.BufferAttribute(times, 1));
+
+	particleSystem = new THREE.Points(geometry, shaderMaterial);
+
+	this.particleSystem = particleSystem;
+
+	this.stop = function () {
+		position.set(0, 0, 0);
+	};
+
+	var tmp = 360 / TOTAL;
+	this.start = function (pos) {
+		time = 0;
+		position.set(pos.x, pos.y, 0);
+		_.each(particles, function (p, n) {
+			p.init(n * tmp);
+		});
+		scene.boom();
+	};
+
+	this.clear = function () {
+		time = 1;
+		position.set(0, 0, 0);
+	};
+
+	this.update = function () {
+		var i, i3, times = geometry.attributes.time.array,
+			positions = geometry.attributes.position.array;
+
+		time += inc;
+
+		time = Math.min(1, time);
+
+		if (time >= 1) this.clear();// TODO: don't clear this every time, clear once and stop rendering
+
+		particleSystem.position.set(scene.getCameraPosition().x, scene.getCameraPosition().y, 0);
+
+		for (i = 0, i2 = 0, i3 = 0; i < TOTAL; i++, i2 += 2, i3 += 3) {
+			particles[i].update();
+			positions[i3 + 0] = position.x - scene.getCameraPosition().x;
+			positions[i3 + 1] = position.y - scene.getCameraPosition().y;
+			positions[i3 + 2] = position.z;
+			velocities[i2 + 0] = particles[i].getVelocity().x;
+			velocities[i2 + 1] = particles[i].getVelocity().y;
+			times[i] = particles[i].getTime();
+		}
+
+		geometry.attributes.time.needsUpdate = true;
+		geometry.attributes.position.needsUpdate = true;
+		geometry.attributes.velocity.needsUpdate = true;
+	};
+
+};
+
+},{"../scene":26,"three":10,"underscore":11}],23:[function(require,module,exports){
+'use strict';
+
+var vert = `
+float quarticOut(float t) {
+  return pow(t - 1.0, 3.0) * (1.0 - t) + 1.0;
+}
+float exponentialOut(float t) {
+  return t == 1.0 ? t : 1.0 - pow(2.0, -10.0 * t);
+}
+
+attribute vec2 velocity;
+attribute float time;
+varying float vTime;
+void main() {
+	vTime = time;
+	vec3 pos = vec3(position);
+	pos.x = position.x + (exponentialOut(time) * velocity.x);
+	pos.y = position.y + (exponentialOut(time) * velocity.y);
+	vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+	gl_PointSize = 7.0;
+	gl_Position = projectionMatrix * mvPosition;
+}`;
+
+var frag = `
+
+float cubicOut(float t) {
+  float f = t - 1.0;
+  return f * f * f + 1.0;
+}
+varying float vTime;
+void main() {
+	gl_FragColor = vec4(0.169,0.367,0.91,cubicOut(1.0-vTime));
+}`;
+
+var _ = require('underscore'),
+	THREE = require('three'),
+	scene = require('../scene');
+
+var TOTAL = 75;
+
+var Particle = function () {
+	var position = new THREE.Vector3(0, 0, 0), velocity = new THREE.Vector2(0, 0),
+		time = 0, inc;
+
+	var dir = function () {
+		return Math.random() < 0.5 ? -1.0 : 1.0;
+	};
+
+	var setInc = function () {
+		inc = 0.01 + (Math.random() * 0.05);
+	};
+
+	setInc();
+
+	this.update = function (p, a) {
+		if (!started) return;
+		time += inc;
+		if (time >= 1) {
+			setInc();
+			velocity.x = Math.cos(a - 1.5708);// could move these to the shader...
+			velocity.y = Math.sin(a - 1.5708);// + 90 degrees in radians
+			position.x = p.x + Math.random() * 0.1 * dir();
+			position.y = p.y + Math.random() * 0.1 * dir();
+			time = 0.0;
+			if (respawn) {
+				position.z = 0;
+			} else {
+				position.z = -10;
+			}
+		}
+	};
+
+	var started = false, respawn = false;
+	this.start = function () {
+		started = true;
+		respawn = true;
+	};
+	this.stop = function () {
+		respawn = false;
+	};
+
+	this.clear = function () {
+		time = 1;
+		respawn = false;
+	};
+
+	this.getPosition = function () {
+		return position;
+	};
+
+	this.getVelocity = function () {
+		return velocity;
+	};
+
+	this.getTime = function () {
+		return time;
+	};
+};
+// --end particle
+
+module.exports = function () {
+	var particleSystem,
+		geometry,
+		positions = new Float32Array(TOTAL * 3),
+		velocities = new Float32Array(TOTAL * 2),
+		times = new Float32Array(TOTAL), // each particle has one life
+		particles = [],
+		i, i2, i3;
+
+	var shaderMaterial = new THREE.ShaderMaterial({
+		uniforms: { },
+		vertexShader: vert,
+		fragmentShader: frag,
+
+		blending: THREE.AdditiveBlending,
+		depthTest: true,
+		transparent: true
+
+	});
+
+	geometry = new THREE.BufferGeometry();
+
+	for (i = 0, i2 = 0, i3 = 0; i < TOTAL; i++, i2 += 2, i3 += 3) {
+		positions[i3 + 0] = 0;
+		positions[i3 + 1] = 0;
+		positions[i3 + 2] = 0;
+		velocities[i2 + 0] = 0;
+		velocities[i2 + 1] = 0;
+		times[i] = 0;
+		particles.push(new Particle());
+	}
+
+	geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
+	geometry.addAttribute('velocity', new THREE.BufferAttribute(velocities, 2));
+	geometry.addAttribute('time', new THREE.BufferAttribute(times, 1));
+
+	particleSystem = new THREE.Points(geometry, shaderMaterial);
+
+	this.particleSystem = particleSystem;
+
+	this.stop = function () {
+		_.each(particles, function (p) {
+			p.stop();
+		});
+	},
+
+	this.start = function () {
+		_.each(particles, function (p) {
+			p.start();
+		});
+	},
+
+	this.clear = function () {
+		_.each(particles, function (p) {
+			p.clear();
+		});
+	},
+
+	this.update = function (pos, angle) {
+		var i, i3, times = geometry.attributes.time.array,
+			positions = geometry.attributes.position.array;
+
+		particleSystem.position.set(scene.getCameraPosition().x, scene.getCameraPosition().y, 0);
+
+		for (i = 0, i2 = 0, i3 = 0; i < TOTAL; i++, i2 += 2, i3 += 3) {
+			particles[i].update(pos, angle);
+			positions[i3 + 0] = particles[i].getPosition().x - scene.getCameraPosition().x;
+			positions[i3 + 1] = particles[i].getPosition().y - scene.getCameraPosition().y;
+			positions[i3 + 2] = particles[i].getPosition().z;
+			velocities[i2 + 0] = particles[i].getVelocity().x;
+			velocities[i2 + 1] = particles[i].getVelocity().y;
+			times[i] = particles[i].getTime();
+		}
+
+		// TODO: try not updating these when we're trying to turn the effect off
+		geometry.attributes.time.needsUpdate = true;
+		geometry.attributes.position.needsUpdate = true;
+		geometry.attributes.velocity.needsUpdate = true;
+	};
+
+};
+
+},{"../scene":26,"three":10,"underscore":11}],24:[function(require,module,exports){
 'use strict';
 var THREE = require('three'),
 	thrust = require('./engine/thrust'),
 	Entity = require('./engine/entity'),
 	Morph = require('./morph'),
-	Flame = require('./flame');
+	Flame = require('./particles/flame'),
+	Explosion = require('./particles/explosion');
 
 const MISSILE_MAX_SPEED = 10.0,
 	MISSILE_MAX_ANGULAR_SPEED = 5.0,
@@ -49450,17 +49613,18 @@ const MISSILE_MAX_SPEED = 10.0,
 	JUMP_FORCE = 1500,
 	GRAVITY = 100;
 
-const RADIUS = 0.25;
+const RADIUS = 0.2;
 const points = [
-	{ x: 0, y: 0.25, z: 0, r: RADIUS, rs: RADIUS * RADIUS },
-	{ x: 0, y: -0.25, z: 0, r: RADIUS, rs: RADIUS * RADIUS }
+	{ x: 0, y: 0.32, z: 0, r: RADIUS, rs: RADIUS * RADIUS },
+	{ x: 0, y: -0.32, z: 0, r: RADIUS, rs: RADIUS * RADIUS }
 ];
 
 var Player = function () {
 	var entity = new Entity(points),
 		dead = false,
 		input,
-		flame = new Flame();
+		flame = new Flame(),
+		explosion = new Explosion();
 
 	var keys = {
 		left: false, right: false, jump: false, morph: false,
@@ -49549,8 +49713,8 @@ var Player = function () {
 			entity.update(dt, applyForce, applyDamping);
 		}
 
-		flame.updatePosition(entity.getPoints()[1]);
-		flame.update();
+		flame.update(entity.getPoints()[1], entity.rotation().z);
+		explosion.update();
 	};
 
 	this.getScale = function () {
@@ -49565,6 +49729,7 @@ var Player = function () {
 		dead = true;
 		input.removeListener('input.move', handleInput);
 		flame.stop();
+		explosion.start(entity.position());
 	};
 
 	this.set = function (conf) {
@@ -49577,10 +49742,15 @@ var Player = function () {
 		input.on('input.move', handleInput);
 		entity.reset(conf.spawn.x, conf.spawn.y);
 		flame.clear();
+		explosion.clear();
 	};
 
 	this.getFlame = function () {
 		return flame.particleSystem;
+	};
+
+	this.getExplosion = function () {
+		return explosion.particleSystem;
 	};
 
 	this.position = entity.position;
@@ -49593,7 +49763,7 @@ var Player = function () {
 
 module.exports = Player;
 
-},{"./engine/entity":13,"./engine/thrust":18,"./flame":19,"./morph":21,"three":10}],24:[function(require,module,exports){
+},{"./engine/entity":13,"./engine/thrust":18,"./morph":20,"./particles/explosion":22,"./particles/flame":23,"three":10}],25:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore'),
@@ -49693,12 +49863,48 @@ module.exports = function () {
 
 }();
 
-},{"./engine/input":14,"./player":23,"./storage":26,"underscore":11}],25:[function(require,module,exports){
+},{"./engine/input":14,"./player":24,"./storage":27,"underscore":11}],26:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore'),
-	THREE = require('three'),
-	Flame = require('./flame');
+	THREE = require('three');
+
+var shake = function () {
+	var time, MAX = 10, offset = new THREE.Vector2();
+
+	var mag = function () {
+		var m = 0.3;
+		return function () {
+			return Math.random() < 0.5 ? -m : m;
+		};
+	}();
+
+	var shake = {
+		update: function () {
+			time -= 1;
+			if (time >= 0) {
+				offset.set(Math.random() * mag(), Math.random() * mag());
+			} else {
+				offset.set(0, 0);
+			}
+		},
+		start: function () {
+			time = MAX;
+		},
+		stop: function () {
+			time = 0;
+			offset.set(0, 0);
+		},
+		get: function () {
+			var ret = new THREE.Vector2(0, 0);
+			return function (p) {
+				ret.set(p.x + offset.x, p.y + offset.y);
+				return ret;
+			};
+		}()
+	};
+	return shake;
+}();
 
 // returns a soft edge for the camera position looking at the world
 var edge = function () {
@@ -49774,6 +49980,7 @@ module.exports = function () {
 		},
 
 		render: function () {
+			shake.update();
 			renderer.render(scene, cam);
 		},
 
@@ -49785,9 +49992,14 @@ module.exports = function () {
 			var e;
 			return function (p) {
 				e = edge.get(p);
+				e = shake.get(e);
 				cam.position.set(e.x, e.y, zoom);
 			};
 		}(),
+
+		boom: function () {
+			shake.start();
+		},
 
 		remove: function (m) {
 			scene.remove(m);
@@ -49799,13 +50011,13 @@ module.exports = function () {
 				if (child !== ambientLight) {
 					scene.remove(child);
 				}
-
 			});
+			shake.stop();
 		}
 	};
 }();
 
-},{"./flame":19,"bezier-easing":2,"three":10,"underscore":11}],26:[function(require,module,exports){
+},{"bezier-easing":2,"three":10,"underscore":11}],27:[function(require,module,exports){
 'use strict';
 
 var replay_default = [{'spawn': {'x': 1.5,'y': 21},'input': '{"36":{"left":false,"right":false,"jump":false,"morph":true},"43":{"left":false,"right":false,"jump":false,"morph":false},"44":{"left":false,"right":true,"jump":false,"morph":false},"73":{"left":false,"right":false,"jump":false,"morph":false},"113":{"left":true,"right":false,"jump":false,"morph":false},"173":{"left":false,"right":false,"jump":false,"morph":false},"181":{"left":false,"right":true,"jump":false,"morph":false}}'}, {'spawn': {'x': 2.5,'y': 21},'input': '{"39":{"left":false,"right":false,"jump":false,"morph":true},"48":{"left":false,"right":false,"jump":false,"morph":false},"59":{"left":false,"right":true,"jump":false,"morph":false}}'}, {'spawn': {'x': 3.5,'y': 21},'input': '{"1":{"left":false,"right":false,"jump":false,"morph":false},"39":{"left":false,"right":false,"jump":false,"morph":true},"46":{"left":false,"right":false,"jump":false,"morph":false},"49":{"left":false,"right":true,"jump":false,"morph":false},"67":{"left":false,"right":false,"jump":false,"morph":false}}'}];
@@ -49864,7 +50076,7 @@ module.exports = function () {
 	};
 }();
 
-},{"./engine/input":14,"underscore":11}],27:[function(require,module,exports){
+},{"./engine/input":14,"underscore":11}],28:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore'),
@@ -49885,33 +50097,43 @@ var World = function () {
 
 	EventEmitter.call(this);
 
-	var handleCollision = function (player, collision, type) {
-		if (type === 2) {
+	var handleCollision = function () {
+		var killPlayer = function (player) {
 			scene.remove(player.avatar.man);
 			scene.remove(player.avatar.missile);
-			_.every(targets, function (t) {
-				if (t.position.x === collision.x && t.position.y === collision.y) {
-					scene.remove(t);
-					map.removeBlock(collision.x, collision.y);
-					targets = _.without(targets, t);
-					return false;
-				}
-				return true;
-			});
-			if (!player.isDead()) {
+			if (!player.isDead()) {// TODO: is this require? why?
 				player.kill();
 				if (player === playerToWatch) {
 					self.emit('world.player.killed');
 				}
 			}
-		}
-
-	};
+		};
+		return function (player, collision, type) {
+			if (type === 1) {
+				killPlayer(player);
+			} else if (type === 2) {
+				_.every(targets, function (t) {
+					if (t.position.x === collision.x && t.position.y === collision.y) {
+						scene.remove(t);
+						map.removeBlock(collision.x, collision.y);
+						targets = _.without(targets, t);
+						return false;
+					}
+					return true;
+				});
+				killPlayer(player);
+			}
+		};
+	}();
 
 	this.update = function (ticks, step) {
 		_.each(players, function (p) {
 			p.update(ticks, step);
-			map.handleCollides(p, 1);
+			if (p.isMan()) {
+				map.handleCollides(p, 1);
+			} else {
+				map.checkCollides(p, 1, handleCollision);
+			}
 			map.checkCollides(p, 2, handleCollision);
 		});
 	};
@@ -49954,6 +50176,7 @@ var World = function () {
 		scene.add(player.avatar.man);
 		scene.add(player.avatar.missile);
 		scene.add(player.getFlame());
+		scene.add(player.getExplosion());
 		if (watch) {
 			playerToWatch = player;
 		}
@@ -49992,4 +50215,4 @@ util.inherits(World, EventEmitter);
 
 module.exports = World;
 
-},{"./assets":12,"./engine/line":15,"./engine/map":17,"./scene":25,"events":3,"underscore":11,"util":7}]},{},[1]);
+},{"./assets":12,"./engine/line":15,"./engine/map":17,"./scene":26,"events":3,"underscore":11,"util":7}]},{},[1]);

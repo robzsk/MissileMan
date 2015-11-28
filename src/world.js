@@ -18,33 +18,43 @@ var World = function () {
 
 	EventEmitter.call(this);
 
-	var handleCollision = function (player, collision, type) {
-		if (type === 2) {
+	var handleCollision = function () {
+		var killPlayer = function (player) {
 			scene.remove(player.avatar.man);
 			scene.remove(player.avatar.missile);
-			_.every(targets, function (t) {
-				if (t.position.x === collision.x && t.position.y === collision.y) {
-					scene.remove(t);
-					map.removeBlock(collision.x, collision.y);
-					targets = _.without(targets, t);
-					return false;
-				}
-				return true;
-			});
-			if (!player.isDead()) {
+			if (!player.isDead()) {// TODO: is this require? why?
 				player.kill();
 				if (player === playerToWatch) {
 					self.emit('world.player.killed');
 				}
 			}
-		}
-
-	};
+		};
+		return function (player, collision, type) {
+			if (type === 1) {
+				killPlayer(player);
+			} else if (type === 2) {
+				_.every(targets, function (t) {
+					if (t.position.x === collision.x && t.position.y === collision.y) {
+						scene.remove(t);
+						map.removeBlock(collision.x, collision.y);
+						targets = _.without(targets, t);
+						return false;
+					}
+					return true;
+				});
+				killPlayer(player);
+			}
+		};
+	}();
 
 	this.update = function (ticks, step) {
 		_.each(players, function (p) {
 			p.update(ticks, step);
-			map.handleCollides(p, 1);
+			if (p.isMan()) {
+				map.handleCollides(p, 1);
+			} else {
+				map.checkCollides(p, 1, handleCollision);
+			}
 			map.checkCollides(p, 2, handleCollision);
 		});
 	};
@@ -87,6 +97,7 @@ var World = function () {
 		scene.add(player.avatar.man);
 		scene.add(player.avatar.missile);
 		scene.add(player.getFlame());
+		scene.add(player.getExplosion());
 		if (watch) {
 			playerToWatch = player;
 		}

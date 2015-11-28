@@ -22,21 +22,24 @@ void main() {
 }`;
 
 var frag = `
-uniform sampler2D transitions;
+
+float cubicOut(float t) {
+  float f = t - 1.0;
+  return f * f * f + 1.0;
+}
 varying float vTime;
 void main() {
-	gl_FragColor = texture2D(transitions, vec2(vTime, 0));
+	gl_FragColor = vec4(0.169,0.367,0.91,cubicOut(1.0-vTime));
 }`;
 
-var $ = require('jquery'),
-	_ = require('underscore'),
+var _ = require('underscore'),
 	THREE = require('three'),
-	scene = require('./scene');
+	scene = require('../scene');
 
-var TOTAL = 150;
+var TOTAL = 75;
 
 var Particle = function () {
-	var position = new THREE.Vector3(0, 0, 0), velocity = new THREE.Vector2(0, 0.5),
+	var position = new THREE.Vector3(0, 0, 0), velocity = new THREE.Vector2(0, 0),
 		time = 0, inc;
 
 	var dir = function () {
@@ -44,7 +47,7 @@ var Particle = function () {
 	};
 
 	var setInc = function () {
-		inc = 0.005 + (Math.random() * 0.05);
+		inc = 0.01 + (Math.random() * 0.05);
 	};
 
 	setInc();
@@ -54,8 +57,8 @@ var Particle = function () {
 		time += inc;
 		if (time >= 1) {
 			setInc();
-			velocity.x = -Math.cos(a + 1.5708);// could move these to the shader...
-			velocity.y = -Math.sin(a + 1.5708);// + 90 degrees in radians
+			velocity.x = Math.cos(a - 1.5708);// could move these to the shader...
+			velocity.y = Math.sin(a - 1.5708);// + 90 degrees in radians
 			position.x = p.x + Math.random() * 0.1 * dir();
 			position.y = p.y + Math.random() * 0.1 * dir();
 			time = 0.0;
@@ -105,9 +108,7 @@ module.exports = function () {
 		i, i2, i3;
 
 	var shaderMaterial = new THREE.ShaderMaterial({
-		uniforms: {
-			transitions: { type: 't', value: THREE.ImageUtils.loadTexture('assets/textures/transitions.png') }
-		},
+		uniforms: { },
 		vertexShader: vert,
 		fragmentShader: frag,
 
@@ -155,9 +156,6 @@ module.exports = function () {
 		});
 	},
 
-	this.updatePosition = function () {};
-
-	// TODO: check can we pass in the updatePosition params here and remove the updatePosition method?
 	this.update = function (pos, angle) {
 		var i, i3, times = geometry.attributes.time.array,
 			positions = geometry.attributes.position.array;
@@ -174,6 +172,7 @@ module.exports = function () {
 			times[i] = particles[i].getTime();
 		}
 
+		// TODO: try not updating these when we're trying to turn the effect off
 		geometry.attributes.time.needsUpdate = true;
 		geometry.attributes.position.needsUpdate = true;
 		geometry.attributes.velocity.needsUpdate = true;

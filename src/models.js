@@ -22,7 +22,7 @@ module.exports = {
 			'wireframe': false,
 			'DbgName': 'Head',
 			'shading': 'lambert',
-			'colorDiffuse': [0.020902, 0.031663, 0.846154],
+			'colorDiffuse': [0.169, 0.367, 0.91],
 			'depthWrite': true,
 			'depthTest': true,
 			'visible': true,

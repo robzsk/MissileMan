@@ -1,8 +1,44 @@
 'use strict';
 
 var _ = require('underscore'),
-	THREE = require('three'),
-	Flame = require('./flame');
+	THREE = require('three');
+
+var shake = function () {
+	var time, MAX = 10, offset = new THREE.Vector2();
+
+	var mag = function () {
+		var m = 0.3;
+		return function () {
+			return Math.random() < 0.5 ? -m : m;
+		};
+	}();
+
+	var shake = {
+		update: function () {
+			time -= 1;
+			if (time >= 0) {
+				offset.set(Math.random() * mag(), Math.random() * mag());
+			} else {
+				offset.set(0, 0);
+			}
+		},
+		start: function () {
+			time = MAX;
+		},
+		stop: function () {
+			time = 0;
+			offset.set(0, 0);
+		},
+		get: function () {
+			var ret = new THREE.Vector2(0, 0);
+			return function (p) {
+				ret.set(p.x + offset.x, p.y + offset.y);
+				return ret;
+			};
+		}()
+	};
+	return shake;
+}();
 
 // returns a soft edge for the camera position looking at the world
 var edge = function () {
@@ -78,6 +114,7 @@ module.exports = function () {
 		},
 
 		render: function () {
+			shake.update();
 			renderer.render(scene, cam);
 		},
 
@@ -89,9 +126,14 @@ module.exports = function () {
 			var e;
 			return function (p) {
 				e = edge.get(p);
+				e = shake.get(e);
 				cam.position.set(e.x, e.y, zoom);
 			};
 		}(),
+
+		boom: function () {
+			shake.start();
+		},
 
 		remove: function (m) {
 			scene.remove(m);
@@ -103,8 +145,8 @@ module.exports = function () {
 				if (child !== ambientLight) {
 					scene.remove(child);
 				}
-
 			});
+			shake.stop();
 		}
 	};
 }();

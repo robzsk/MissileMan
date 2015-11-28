@@ -59,7 +59,7 @@
 				loadLevel();
 				setupPlayers();
 			}
-		}, 20);
+		}, 1000);
 	});
 
 	overlay.on('title.playbutton.click', function () {

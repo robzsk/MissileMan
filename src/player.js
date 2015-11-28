@@ -3,7 +3,8 @@ var THREE = require('three'),
 	thrust = require('./engine/thrust'),
 	Entity = require('./engine/entity'),
 	Morph = require('./morph'),
-	Flame = require('./flame');
+	Flame = require('./particles/flame'),
+	Explosion = require('./particles/explosion');
 
 const MISSILE_MAX_SPEED = 10.0,
 	MISSILE_MAX_ANGULAR_SPEED = 5.0,
@@ -25,7 +26,8 @@ var Player = function () {
 	var entity = new Entity(points),
 		dead = false,
 		input,
-		flame = new Flame();
+		flame = new Flame(),
+		explosion = new Explosion();
 
 	var keys = {
 		left: false, right: false, jump: false, morph: false,
@@ -115,6 +117,7 @@ var Player = function () {
 		}
 
 		flame.update(entity.getPoints()[1], entity.rotation().z);
+		explosion.update();
 	};
 
 	this.getScale = function () {
@@ -129,6 +132,7 @@ var Player = function () {
 		dead = true;
 		input.removeListener('input.move', handleInput);
 		flame.stop();
+		explosion.start(entity.position());
 	};
 
 	this.set = function (conf) {
@@ -141,10 +145,15 @@ var Player = function () {
 		input.on('input.move', handleInput);
 		entity.reset(conf.spawn.x, conf.spawn.y);
 		flame.clear();
+		explosion.clear();
 	};
 
 	this.getFlame = function () {
 		return flame.particleSystem;
+	};
+
+	this.getExplosion = function () {
+		return explosion.particleSystem;
 	};
 
 	this.position = entity.position;
