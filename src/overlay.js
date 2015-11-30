@@ -41,6 +41,18 @@ var Overlay = function () {
 		return b;
 	}();
 
+	var title = function () {
+		var t = $('<img src="assets/title.png">')
+			.css({
+				position: 'fixed',
+				top: '100px',
+				left: ($(window).width() / 2) - 250
+			});
+		$('body').append(t);
+
+		return t;
+	}();
+
 	var onInput = function (m) {
 		if (m.select) {
 			self.emit('title.playbutton.click');
@@ -54,12 +66,14 @@ var Overlay = function () {
 
 	this.showTitle = function () {
 		button.show();
+		title.show();
 		input.removeListener('input.move', onInput);
 		input.on('input.move', onInput);
 	};
 
 	this.hideTitle = function () {
 		button.hide();
+		title.hide();
 	};
 
 	this.update = function (ticks) {

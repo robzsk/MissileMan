@@ -49263,6 +49263,18 @@ var Overlay = function () {
 		return b;
 	}();
 
+	var title = function () {
+		var t = $('<img src="assets/title.png">')
+			.css({
+				position: 'fixed',
+				top: '100px',
+				left: ($(window).width() / 2) - 250
+			});
+		$('body').append(t);
+
+		return t;
+	}();
+
 	var onInput = function (m) {
 		if (m.select) {
 			self.emit('title.playbutton.click');
@@ -49276,12 +49288,14 @@ var Overlay = function () {
 
 	this.showTitle = function () {
 		button.show();
+		title.show();
 		input.removeListener('input.move', onInput);
 		input.on('input.move', onInput);
 	};
 
 	this.hideTitle = function () {
 		button.hide();
+		title.hide();
 	};
 
 	this.update = function (ticks) {
@@ -49587,6 +49601,9 @@ module.exports = function () {
 	particleSystem = new THREE.Points(geometry, shaderMaterial);
 
 	this.particleSystem = particleSystem;
+
+	// TODO: look into this, the ps seems to get incorrectly culled if it's not drawn on screen at least once
+	particleSystem.frustumCulled = false;
 
 	this.stop = function () {
 		_.each(particles, function (p) {

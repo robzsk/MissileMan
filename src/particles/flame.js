@@ -138,6 +138,9 @@ module.exports = function () {
 
 	this.particleSystem = particleSystem;
 
+	// TODO: look into this, the ps seems to get incorrectly culled if it's not drawn on screen at least once
+	particleSystem.frustumCulled = false;
+
 	this.stop = function () {
 		_.each(particles, function (p) {
 			p.stop();

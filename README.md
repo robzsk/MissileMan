@@ -1,7 +1,7 @@
 Missileman
 ==========================
 
-[Preview](https://htmlpreview.github.io/?https://github.com/robzsk/Missileman/blob/master/build/index.html)
+[Preview](https://htmlpreview.github.io/?https://github.com/robzsk/Missileman/blob/master/preview.html)
 
 License
 =======
