@@ -69,7 +69,7 @@ module.exports = function () {
 		velocities = new Float32Array(TOTAL * 2),
 		times = new Float32Array(TOTAL), // each particle has one life
 		particles = [],
-		i, i2, i3, time, inc = 0.002;
+		i, i2, i3, time, inc = 0.004;
 
 	var shaderMaterial = new THREE.ShaderMaterial({
 		uniforms: { },

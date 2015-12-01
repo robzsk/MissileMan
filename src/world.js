@@ -22,7 +22,7 @@ var World = function () {
 		var killPlayer = function (player) {
 			scene.remove(player.avatar.man);
 			scene.remove(player.avatar.missile);
-			if (!player.isDead()) {// TODO: is this require? why?
+			if (!player.isDead()) {
 				player.kill();
 				if (player === playerToWatch) {
 					self.emit('world.player.killed');

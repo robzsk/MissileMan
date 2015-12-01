@@ -3,13 +3,13 @@
 
 	const _ = require('underscore'),
 		$ = require('jquery'),
-		Overlay = require('./src/overlay'),
+		Title = require('./src/overlay/title'),
 		World = require('./src/world'),
 		assets = require('./src/assets'),
 		loop = require('./src/engine/loop'),
 		replays = require('./src/replays');
 
-	var overlay = new Overlay(),
+	var title = new Title(),
 		world = new World(),
 		spawnPoints;
 
@@ -38,8 +38,8 @@
 		replays.setDemoMode(true);
 		loadLevel();
 		setupPlayers();
-		overlay.fadeFromBlack();
-		overlay.showTitle();
+		title.fadeFromBlack();
+		title.showTitle();
 	};
 
 	world.on('world.player.killed', function (player) {
@@ -54,7 +54,7 @@
 			if (world.isComplete()) {
 				showTitle();
 			} else {
-				overlay.fadeFromBlack();
+				title.fadeFromBlack();
 				loop.reset();
 				loadLevel();
 				setupPlayers();
@@ -62,10 +62,10 @@
 		}, 1000);
 	});
 
-	overlay.on('title.playbutton.click', function () {
+	title.on('title.playbutton.click', function () {
 		replays.setDemoMode(false);
-		overlay.hideTitle();
-		overlay.fadeFromBlack();
+		title.hideTitle();
+		title.fadeFromBlack();
 		loadLevel();
 		startLevel();
 	});
@@ -75,7 +75,7 @@
 	});
 
 	loop.on('loop.update', function (ticks, step) {
-		overlay.update(ticks);
+		title.update(ticks);
 		world.update(ticks, step);
 	});
 

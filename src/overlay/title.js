@@ -3,7 +3,7 @@
 var $ = require('jquery'),
 	util = require('util'),
 	EventEmitter = require('events').EventEmitter,
-	Input = require('./engine/input');
+	Input = require('../engine/input');
 
 var Overlay = function () {
 	var self = this,
