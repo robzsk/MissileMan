@@ -1,6 +1,7 @@
 'use strict';
 
-var util = require('util'),
+var gamepads = require('./gamepads'),
+	util = require('util'),
 	EventEmitter = require('events').EventEmitter,
 	Stats = require('stats.js');
 
@@ -41,6 +42,7 @@ module.exports = function () {
 	loop = new Loop();
 
 	+function run () {
+		gamepads.update();
 		requestAnimationFrame(run);
 		stats.begin();
 		now = timestamp();

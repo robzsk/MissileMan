@@ -4,13 +4,13 @@
 
 	const _ = require('underscore'),
 		$ = require('jquery'),
-		Overlay = require('./src/overlay'),
+		Title = require('./src/overlay/title'),
 		World = require('./src/world'),
 		assets = require('./src/assets'),
 		loop = require('./src/engine/loop'),
 		replays = require('./src/replays');
 
-	var overlay = new Overlay(),
+	var title = new Title(),
 		world = new World(),
 		spawnPoints;
 
@@ -39,8 +39,8 @@
 		replays.setDemoMode(true);
 		loadLevel();
 		setupPlayers();
-		overlay.fadeFromBlack();
-		overlay.showTitle();
+		title.fadeFromBlack();
+		title.showTitle();
 	};
 
 	world.on('world.player.killed', function (player) {
@@ -55,7 +55,7 @@
 			if (world.isComplete()) {
 				showTitle();
 			} else {
-				overlay.fadeFromBlack();
+				title.fadeFromBlack();
 				loop.reset();
 				loadLevel();
 				setupPlayers();
@@ -63,10 +63,10 @@
 		}, 1000);
 	});
 
-	overlay.on('title.playbutton.click', function () {
+	title.on('title.playbutton.click', function () {
 		replays.setDemoMode(false);
-		overlay.hideTitle();
-		overlay.fadeFromBlack();
+		title.hideTitle();
+		title.fadeFromBlack();
 		loadLevel();
 		startLevel();
 	});
@@ -76,7 +76,7 @@
 	});
 
 	loop.on('loop.update', function (ticks, step) {
-		overlay.update(ticks);
+		title.update(ticks);
 		world.update(ticks, step);
 	});
 
@@ -85,7 +85,7 @@
 	});
 })();
 
-},{"./src/assets":12,"./src/engine/loop":16,"./src/overlay":21,"./src/replays":25,"./src/world":28,"jquery":8,"underscore":11}],2:[function(require,module,exports){
+},{"./src/assets":12,"./src/engine/loop":17,"./src/overlay/title":22,"./src/replays":26,"./src/world":29,"jquery":8,"underscore":11}],2:[function(require,module,exports){
 /**
  * BezierEasing - use bezier curve for transition easing function
  * by Gaëtan Renaudeau 2014 - 2015 – MIT License
@@ -48578,7 +48578,7 @@ module.exports = function () {
 	return new Assets();
 }();
 
-},{"./models.js":19,"three":10,"underscore":11}],13:[function(require,module,exports){
+},{"./models.js":20,"three":10,"underscore":11}],13:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore'),
@@ -48682,10 +48682,25 @@ module.exports = Entity;
 },{"three":10,"underscore":11}],14:[function(require,module,exports){
 'use strict';
 
+var gamepads;
+
+module.exports = {
+	update: function () {
+		gamepads = navigator.getGamepads();
+	},
+	get: function (index) {
+		return gamepads[index];
+	}
+};
+
+},{}],15:[function(require,module,exports){
+'use strict';
+
 var $ = require('jquery'),
 	_ = require('underscore'),
 	util = require('util'),
-	EventEmitter = require('events').EventEmitter;
+	EventEmitter = require('events').EventEmitter,
+	gamepads = require('./gamepads');
 
 var ReplayInput = function (file) {
 	var moves = file ? JSON.parse(file) : [], self = this;
@@ -48708,30 +48723,18 @@ util.inherits(ReplayInput, EventEmitter);
 
 var GamepadInput = function (index, buttons) {
 	var current = _.mapObject(buttons, function () { return false; }),
-		prev = _.clone(current), moves = {}, self = this;
+		prev = _.clone(current), self = this;
 
 	EventEmitter.call(this);
 
-	var poll = function () {
-		var pad = navigator.getGamepads()[index];
-		_.each(buttons, function (button, action) {
-			current[action] = pad.buttons[button].pressed;
-		});
-	};
-
-	this.reset = function () {
-		moves = {};
-		self.removeAllListeners('input.move');
-	};
-
-	this.serialize = function () {
-		return JSON.stringify(moves);
-	};
-
 	this.update = function (tick) {
-		poll();
+		var pad = gamepads.get(index);
+		if (pad) {
+			_.each(buttons, function (button, action) {
+				current[action] = pad.buttons[button].pressed;
+			});
+		}
 		if (!_.isMatch(current, prev)) {
-			moves[tick.toString()] = _.clone(current);
 			self.emit('input.move', _.clone(current));
 			_.extend(prev, current); // copy
 		}
@@ -48741,7 +48744,7 @@ util.inherits(GamepadInput, EventEmitter);
 
 var KeyboardInput = function (keys) {
 	var current = _.mapObject(keys, function () { return false; }),
-		prev = _.clone(current), moves = {}, self = this;
+		prev = _.clone(current), self = this;
 
 	EventEmitter.call(this);
 
@@ -48758,6 +48761,36 @@ var KeyboardInput = function (keys) {
 	$(document.body).on('keydown', function (ev) { return onkey(ev, ev.keyCode, true); });
 	document.body.addEventListener('keyup', function (ev) { return onkey(ev, ev.keyCode, false); });
 
+	this.update = function (tick) {
+		if (!_.isMatch(current, prev)) {
+			self.emit('input.move', _.clone(current));
+			_.extend(prev, current); // copy
+		}
+	};
+};
+util.inherits(KeyboardInput, EventEmitter);
+
+// this class allows for dual gamepad and keyboard configuration of the same player at the same time
+var UserInput = function (config) {
+	// TODO: check for config.keys and config.buttons alignment(they need to have the same properties)
+	var current = _.mapObject(config.keys || config.buttons, function () { return false; }),
+		prev = _.clone(current), moves = {}, self = this, gamepad, keyboard;
+
+	var handleInput = function (m) {
+		current = _.clone(m);
+	};
+
+	EventEmitter.call(this);
+
+	if (typeof config.gamepad === 'object') {
+		gamepad = new GamepadInput(config.gamepad.index, config.buttons);
+		gamepad.on('input.move', handleInput);
+	}
+	if (typeof config.keys === 'object') {
+		keyboard = new KeyboardInput(config.keys);
+		keyboard.on('input.move', handleInput);
+	}
+
 	this.reset = function () {
 		moves = {};
 		self.removeAllListeners('input.move');
@@ -48768,27 +48801,34 @@ var KeyboardInput = function (keys) {
 	};
 
 	this.update = function (tick) {
+		if (gamepad) {
+			gamepad.update(tick);
+		}
+		if (keyboard) {
+			keyboard.update(tick);
+		}
+
 		if (!_.isMatch(current, prev)) {
 			moves[tick.toString()] = _.clone(current);
-			self.emit('input.move', _.clone(current));
 			_.extend(prev, current); // copy
+			self.emit('input.move', _.clone(current));
 		}
 	};
+
 };
-util.inherits(KeyboardInput, EventEmitter);
+
+util.inherits(UserInput, EventEmitter);
 
 module.exports = function (config) {
 	config = config || {};
-	if (typeof config.gamepad === 'object') {
-		return new GamepadInput(config.gamepad.index, config.buttons);
-	} else if (typeof config.keys === 'object') {
-		return new KeyboardInput(config.keys);
-	} else {
+	if (config.replay) {
 		return new ReplayInput(config.replay);
+	} else {
+		return new UserInput(config);
 	}
 };
 
-},{"events":3,"jquery":8,"underscore":11,"util":7}],15:[function(require,module,exports){
+},{"./gamepads":14,"events":3,"jquery":8,"underscore":11,"util":7}],16:[function(require,module,exports){
 'use strict';
 
 var THREE = require('three');
@@ -48858,10 +48898,11 @@ var Line = function (p, x, y) {
 
 module.exports = Line;
 
-},{"three":10}],16:[function(require,module,exports){
+},{"three":10}],17:[function(require,module,exports){
 'use strict';
 
-var util = require('util'),
+var gamepads = require('./gamepads'),
+	util = require('util'),
 	EventEmitter = require('events').EventEmitter,
 	Stats = require('stats.js');
 
@@ -48902,6 +48943,7 @@ module.exports = function () {
 	loop = new Loop();
 
 	+function run () {
+		gamepads.update();
 		requestAnimationFrame(run);
 		stats.begin();
 		now = timestamp();
@@ -48916,7 +48958,7 @@ module.exports = function () {
 	return loop;
 }();
 
-},{"events":3,"stats.js":9,"util":7}],17:[function(require,module,exports){
+},{"./gamepads":14,"events":3,"stats.js":9,"util":7}],18:[function(require,module,exports){
 'use strict';
 
 // 1 2 3
@@ -49028,7 +49070,7 @@ var Map = function () {
 
 module.exports = Map;
 
-},{"./line":15,"underscore":11}],18:[function(require,module,exports){
+},{"./line":16,"underscore":11}],19:[function(require,module,exports){
 'use strict';
 
 var THREE = require('three');
@@ -49063,7 +49105,7 @@ module.exports = function (current, rotation, direction) {
 	current.y += dCopy.y;
 };
 
-},{"three":10}],19:[function(require,module,exports){
+},{"three":10}],20:[function(require,module,exports){
 module.exports = {
 	player: {
 		'name': 'CubeGeometry.3',
@@ -49141,7 +49183,7 @@ module.exports = {
 	}
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 var easing = require('bezier-easing');
@@ -49219,13 +49261,13 @@ var Morph = function (changeToMan, changeToMissile) {
 
 module.exports = Morph;
 
-},{"bezier-easing":2}],21:[function(require,module,exports){
+},{"bezier-easing":2}],22:[function(require,module,exports){
 'use strict';
 
 var $ = require('jquery'),
 	util = require('util'),
 	EventEmitter = require('events').EventEmitter,
-	Input = require('./engine/input');
+	Input = require('../engine/input');
 
 var Overlay = function () {
 	var self = this,
@@ -49308,7 +49350,7 @@ util.inherits(Overlay, EventEmitter);
 
 module.exports = Overlay;
 
-},{"./engine/input":14,"events":3,"jquery":8,"util":7}],22:[function(require,module,exports){
+},{"../engine/input":15,"events":3,"jquery":8,"util":7}],23:[function(require,module,exports){
 'use strict';
 
 var vert = `
@@ -49380,7 +49422,7 @@ module.exports = function () {
 		velocities = new Float32Array(TOTAL * 2),
 		times = new Float32Array(TOTAL), // each particle has one life
 		particles = [],
-		i, i2, i3, time, inc = 0.002;
+		i, i2, i3, time, inc = 0.004;
 
 	var shaderMaterial = new THREE.ShaderMaterial({
 		uniforms: { },
@@ -49461,7 +49503,7 @@ module.exports = function () {
 
 };
 
-},{"../scene":26,"three":10,"underscore":11}],23:[function(require,module,exports){
+},{"../scene":27,"three":10,"underscore":11}],24:[function(require,module,exports){
 'use strict';
 
 var vert = `
@@ -49647,7 +49689,7 @@ module.exports = function () {
 
 };
 
-},{"../scene":26,"three":10,"underscore":11}],24:[function(require,module,exports){
+},{"../scene":27,"three":10,"underscore":11}],25:[function(require,module,exports){
 'use strict';
 var THREE = require('three'),
 	thrust = require('./engine/thrust'),
@@ -49816,107 +49858,110 @@ var Player = function () {
 
 module.exports = Player;
 
-},{"./engine/entity":13,"./engine/thrust":18,"./morph":20,"./particles/explosion":22,"./particles/flame":23,"three":10}],25:[function(require,module,exports){
+},{"./engine/entity":13,"./engine/thrust":19,"./morph":21,"./particles/explosion":23,"./particles/flame":24,"three":10}],26:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore'),
-  Input = require('./engine/input'),
-  Player = require('./player'),
-  storage = require('./storage');
+	Input = require('./engine/input'),
+	Player = require('./player'),
+	storage = require('./storage');
 
 module.exports = function () {
-  var playerInput = new Input({ keys: { left: 37, right: 39, jump: 38, morph: 67 } }),
-    replays = [],
-    currentPlayer = 0,
-    spawnPoints,
-    playerInput,
-    demo = true;
+	var playerInput = new Input({
+			keys: { left: 37, right: 39, jump: 38, morph: 67 },
+			gamepad: { index: 0 }, buttons: { left: 14, right: 15, jump: 0, morph: 1}
+		}),
+		replays = [],
+		currentPlayer = 0,
+		spawnPoints,
+		playerInput,
+		demo = true;
 
-  var createCurrentPlayer = function () {
-    replays.push({
-      spawn: spawnPoints[currentPlayer],
-      input: playerInput
-    });
-  };
+	var createCurrentPlayer = function () {
+		replays.push({
+			spawn: spawnPoints[currentPlayer],
+			input: playerInput
+		});
+	};
 
-  var incCurrentPlayer = function () {
-    currentPlayer += 1;
-    if (currentPlayer >= spawnPoints.length) {
-      currentPlayer = 0;
-    }
-  };
+	var incCurrentPlayer = function () {
+		currentPlayer += 1;
+		if (currentPlayer >= spawnPoints.length) {
+			currentPlayer = 0;
+		}
+	};
 
-  return {
-    init: function (sp) {
-      spawnPoints = sp;
-    },
+	return {
+		init: function (sp) {
+			spawnPoints = sp;
+		},
 
-    reset: function () {
-      replays = [];
-      currentPlayer = 0;
-    },
+		reset: function () {
+			replays = [];
+			currentPlayer = 0;
+		},
 
-    reload: function () {
-      replays = storage.replays();
-      currentPlayer = 0;
-    },
+		reload: function () {
+			replays = storage.replays();
+			currentPlayer = 0;
+		},
 
-    getCurrentPlayer: function () {
-      return currentPlayer;
-    },
+		getCurrentPlayer: function () {
+			return currentPlayer;
+		},
 
-    save: function () {
-      if (!demo) {
-        storage.replays(replays);
-      }
-    },
+		save: function () {
+			if (!demo) {
+				storage.replays(replays);
+			}
+		},
 
-    // TODO: use a object pool here
-    next: function () {
-      if (!demo) {
-        replays[currentPlayer].input = new Input({replay: playerInput.serialize()});
-        playerInput.reset();
-      }
-      incCurrentPlayer();
-      if (!replays[currentPlayer]) {
-        createCurrentPlayer();
-      } else {
-        if (!demo) {
-          replays[currentPlayer].input = playerInput;
-        }
-      }
-    },
+		// TODO: use a object pool here
+		next: function () {
+			if (!demo) {
+				replays[currentPlayer].input = new Input({replay: playerInput.serialize()});
+				playerInput.reset();
+			}
+			incCurrentPlayer();
+			if (!replays[currentPlayer]) {
+				createCurrentPlayer();
+			} else {
+				if (!demo) {
+					replays[currentPlayer].input = playerInput;
+				}
+			}
+		},
 
-    setDemoMode: function (d) {
-      demo = d;
-    },
+		setDemoMode: function (d) {
+			demo = d;
+		},
 
-    getPlayers: function () {
-      var player, ret, pool = [];
-      return function () {
-        ret = [];
-        // must have at least one replay
-        if (replays.length === 0) {
-          createCurrentPlayer();
-        }
-        _.each(replays, function (r) {
-          if (pool.length <= ret.length) {
-            player = new Player();
-            pool.push(player);
-          } else {
-            player = pool[ret.length];
-          }
-          player.set(r);
-          ret.push(player);
-        });
-        return ret;
-      };
-    }()
-  };
+		getPlayers: function () {
+			var player, ret, pool = [];
+			return function () {
+				ret = [];
+				// must have at least one replay
+				if (replays.length === 0) {
+					createCurrentPlayer();
+				}
+				_.each(replays, function (r) {
+					if (pool.length <= ret.length) {
+						player = new Player();
+						pool.push(player);
+					} else {
+						player = pool[ret.length];
+					}
+					player.set(r);
+					ret.push(player);
+				});
+				return ret;
+			};
+		}()
+	};
 
 }();
 
-},{"./engine/input":14,"./player":24,"./storage":27,"underscore":11}],26:[function(require,module,exports){
+},{"./engine/input":15,"./player":25,"./storage":28,"underscore":11}],27:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore'),
@@ -50070,7 +50115,7 @@ module.exports = function () {
 	};
 }();
 
-},{"bezier-easing":2,"three":10,"underscore":11}],27:[function(require,module,exports){
+},{"bezier-easing":2,"three":10,"underscore":11}],28:[function(require,module,exports){
 'use strict';
 
 var replay_default = [{'spawn': {'x': 1.5,'y': 21},'input': '{"36":{"left":false,"right":false,"jump":false,"morph":true},"43":{"left":false,"right":false,"jump":false,"morph":false},"44":{"left":false,"right":true,"jump":false,"morph":false},"73":{"left":false,"right":false,"jump":false,"morph":false},"113":{"left":true,"right":false,"jump":false,"morph":false},"173":{"left":false,"right":false,"jump":false,"morph":false},"181":{"left":false,"right":true,"jump":false,"morph":false}}'}, {'spawn': {'x': 2.5,'y': 21},'input': '{"39":{"left":false,"right":false,"jump":false,"morph":true},"48":{"left":false,"right":false,"jump":false,"morph":false},"59":{"left":false,"right":true,"jump":false,"morph":false}}'}, {'spawn': {'x': 3.5,'y': 21},'input': '{"1":{"left":false,"right":false,"jump":false,"morph":false},"39":{"left":false,"right":false,"jump":false,"morph":true},"46":{"left":false,"right":false,"jump":false,"morph":false},"49":{"left":false,"right":true,"jump":false,"morph":false},"67":{"left":false,"right":false,"jump":false,"morph":false}}'}];
@@ -50129,7 +50174,7 @@ module.exports = function () {
 	};
 }();
 
-},{"./engine/input":14,"underscore":11}],28:[function(require,module,exports){
+},{"./engine/input":15,"underscore":11}],29:[function(require,module,exports){
 'use strict';
 
 var _ = require('underscore'),
@@ -50154,7 +50199,7 @@ var World = function () {
 		var killPlayer = function (player) {
 			scene.remove(player.avatar.man);
 			scene.remove(player.avatar.missile);
-			if (!player.isDead()) {// TODO: is this require? why?
+			if (!player.isDead()) {
 				player.kill();
 				if (player === playerToWatch) {
 					self.emit('world.player.killed');
@@ -50268,4 +50313,4 @@ util.inherits(World, EventEmitter);
 
 module.exports = World;
 
-},{"./assets":12,"./engine/line":15,"./engine/map":17,"./scene":26,"events":3,"underscore":11,"util":7}]},{},[1]);
+},{"./assets":12,"./engine/line":16,"./engine/map":18,"./scene":27,"events":3,"underscore":11,"util":7}]},{},[1]);
