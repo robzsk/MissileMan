@@ -6,6 +6,7 @@
 		Title = require('./src/overlay/title'),
 		World = require('./src/world'),
 		assets = require('./src/assets'),
+		levels = require('./src/levels'),
 		loop = require('./src/engine/loop'),
 		replays = require('./src/replays');
 
@@ -14,7 +15,7 @@
 		spawnPoints;
 
 	var loadLevel = function () {
-		var level = assets.level.test();
+		var level = levels.load();
 		world.clear();
 		replays.init(level.spawnPoints);
 		world.addBlocks(level.cells);
