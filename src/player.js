@@ -22,12 +22,12 @@ const points = [
 	{ x: 0, y: -0.32, z: 0, r: RADIUS, rs: RADIUS * RADIUS }
 ];
 
-var Player = function () {
+var Player = function (color) {
 	var entity = new Entity(points),
 		dead = false,
 		input,
-		flame = new Flame(),
-		explosion = new Explosion();
+		flame = new Flame(color),
+		explosion = new Explosion(color);
 
 	var keys = {
 		left: false, right: false, jump: false, morph: false,
@@ -128,6 +128,20 @@ var Player = function () {
 		return dead;
 	};
 
+	this.setInput = function (i) {
+		i.removeAllListeners('input.move');
+		if (input) {
+			input.removeAllListeners('input.move'); // there can be only one
+		}
+		input = i;
+		input.reset();
+		input.on('input.move', handleInput);
+	};
+
+	this.setSpawn = function (spawn) {
+		entity.reset(spawn.x, spawn.y);
+	};
+
 	this.kill = function () {
 		dead = true;
 		input.removeListener('input.move', handleInput);
@@ -135,17 +149,17 @@ var Player = function () {
 		explosion.start(entity.position());
 	};
 
-	this.set = function (conf) {
+	this.revive = function () {
 		dead = false;
 		keys.reset();
 		morph.reset();
-		input = conf.input;
-		// TODO: probably should do this somwhere else
-		input.removeAllListeners('input.move'); // there can be only one
-		input.on('input.move', handleInput);
-		entity.reset(conf.spawn.x, conf.spawn.y);
 		flame.clear();
 		explosion.clear();
+		this.setInput(input);
+	};
+
+	this.getSerializedInput = function () {
+		return input.serialize();
 	};
 
 	this.getFlame = function () {

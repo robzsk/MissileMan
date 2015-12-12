@@ -1,7 +1,10 @@
 'use strict';
 
 module.exports = {
-	load: function () {
-		return require('./stage1/1')();
+	load: function (n) {
+		return require('./data/' + n)();
+	},
+	total: function () {
+		return 2;
 	}
 };

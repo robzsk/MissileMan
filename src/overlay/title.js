@@ -76,6 +76,10 @@ var Overlay = function () {
 		title.hide();
 	};
 
+	this.isVisible = function () {
+		return title.is(':visible');
+	};
+
 	this.update = function (ticks) {
 		input.update(ticks);
 	};

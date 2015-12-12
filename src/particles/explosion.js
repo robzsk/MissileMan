@@ -19,16 +19,17 @@ void main() {
 	gl_Position = projectionMatrix * mvPosition;
 }`;
 
-var frag = `
-
-float cubicOut(float t) {
-  float f = t - 1.0;
-  return f * f * f + 1.0;
-}
-varying float vTime;
-void main() {
-	gl_FragColor = vec4(0.169,0.367,0.91,cubicOut(1.0-vTime));
-}`;
+var frag = function (r, g, b) {
+	return `
+		float cubicOut(float t) {
+		  float f = t - 1.0;
+		  return f * f * f + 1.0;
+		}
+		varying float vTime;
+		void main() {
+			gl_FragColor = vec4(${r},${g},${b},cubicOut(1.0-vTime));
+		}`;
+};
 
 var _ = require('underscore'),
 	THREE = require('three'),
@@ -61,7 +62,7 @@ var Particle = function () {
 };
 // --end particle
 
-module.exports = function () {
+module.exports = function (color) {
 	var particleSystem,
 		geometry,
 		position = new THREE.Vector3(0, 0, 0),
@@ -74,7 +75,7 @@ module.exports = function () {
 	var shaderMaterial = new THREE.ShaderMaterial({
 		uniforms: { },
 		vertexShader: vert,
-		fragmentShader: frag,
+		fragmentShader: frag(color.r, color.g, color.b),
 
 		blending: THREE.AdditiveBlending,
 		depthTest: true,
@@ -101,6 +102,7 @@ module.exports = function () {
 	particleSystem = new THREE.Points(geometry, shaderMaterial);
 
 	this.particleSystem = particleSystem;
+	this.particleSystem.frustumCulled = false;
 
 	this.stop = function () {
 		position.set(0, 0, 0);

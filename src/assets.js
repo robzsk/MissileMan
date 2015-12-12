@@ -56,25 +56,22 @@ module.exports = function () {
 				return mesh['target'].clone();
 			},
 
-			man: function () {
-				return mesh['man'].clone();
+			man: function (color) {
+				var ret = mesh['man'].clone();
+				// TODO: this wont work when we have different colored players on the screen
+				ret.material.materials[1].color.setRGB(color.r, color.g, color.b);
+				return ret;
 			},
 
-			missile: function () {
-				var ret;
-				var create = function () {
-					if (!ret) {
-						ret = mesh['missile'].clone();
-						ret.rotation.set(0, 0, Math.PI);
-						ret.updateMatrix();
-						ret.geometry.applyMatrix(ret.matrix);
-					}
-					return ret.clone();
-				};
-				return function () {
-					return create();
-				};
-			}()
+			missile: function (color) {
+				var ret = mesh['missile'].clone();
+				ret.rotation.set(0, 0, Math.PI);
+				ret.updateMatrix();
+				// TODO: this wont work when we have different colored players on the screen
+				ret.material.materials[1].color.setRGB(color.r, color.g, color.b);
+				ret.geometry.applyMatrix(ret.matrix);
+				return ret;
+			}
 		};
 	};
 

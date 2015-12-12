@@ -18,6 +18,8 @@ var ReplayInput = function (file) {
 		}
 	};
 
+	this.reset = function () {};
+
 	this.serialize = function () {
 		return JSON.stringify(moves);
 	};

@@ -5,70 +5,64 @@
 		$ = require('jquery'),
 		Title = require('./src/overlay/title'),
 		World = require('./src/world'),
+		Input = require('./src/engine/input'),
 		assets = require('./src/assets'),
 		levels = require('./src/levels'),
-		loop = require('./src/engine/loop'),
-		replays = require('./src/replays');
+		loop = require('./src/engine/loop');
 
 	var title = new Title(),
 		world = new World(),
-		spawnPoints;
+		spawnPoints, job;
 
-	var loadLevel = function () {
-		var level = levels.load();
-		world.clear();
-		replays.init(level.spawnPoints);
-		world.addBlocks(level.cells);
-	};
+	var input = new Input({
+		keys: { left: 37, right: 39, jump: 38, morph: 67 },
+		gamepad: { index: 0 }, buttons: { left: 14, right: 15, jump: 0, morph: 1}
+	});
 
-	var setupPlayers = function () {
-		_.each(replays.getPlayers(), function (p, n) {
-			world.addPlayer(p, n === replays.getCurrentPlayer());
-		});
-	};
+	var currentLevel = 0;
 
-	var startLevel = function () {
+	var loadLevel = function (p) {
 		loop.reset();
-		replays.reset();
-		setupPlayers();
+		world.loadLevel(levels.load(currentLevel), p);
+	};
+
+	var nextLevel = function (p) {
+		loop.reset();
+		currentLevel += 1;
+		if (currentLevel >= levels.total()) {
+			currentLevel = 0;
+		}
+		world.loadLevel(levels.load(currentLevel), p);
 	};
 
 	var showTitle = function () {
 		loop.reset();
-		replays.reload();
-		replays.setDemoMode(true);
 		loadLevel();
-		setupPlayers();
 		title.fadeFromBlack();
 		title.showTitle();
 	};
 
 	world.on('world.player.killed', function (player) {
-		if (world.isComplete()) {
-			replays.save();
-		}
-
-		// TODO: should be doing this in setTimeout?
-		replays.next();
-
-		setTimeout(function () {
+		job = setTimeout(function () {
 			if (world.isComplete()) {
-				showTitle();
+				if (title.isVisible()) {
+					loadLevel();
+				} else {
+					nextLevel(input);
+				}
 			} else {
 				title.fadeFromBlack();
-				loop.reset();
-				loadLevel();
-				setupPlayers();
+				loadLevel(title.isVisible() ? null: input);
 			}
 		}, 1000);
 	});
 
 	title.on('title.playbutton.click', function () {
-		replays.setDemoMode(false);
+		clearTimeout(job);
 		title.hideTitle();
 		title.fadeFromBlack();
-		loadLevel();
-		startLevel();
+		loadLevel(input);
+		loop.reset();
 	});
 
 	$(document).ready(function () {
@@ -83,4 +77,5 @@
 	loop.on('loop.render', function (dt) {
 		world.render(dt);
 	});
+
 })();
