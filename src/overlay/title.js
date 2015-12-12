@@ -42,15 +42,26 @@ var Overlay = function () {
 	}();
 
 	var title = function () {
-		var t = $('<img src="assets/title.png">')
+		var div = $('<div>')
 			.css({
 				position: 'fixed',
 				top: '100px',
 				left: ($(window).width() / 2) - 250
 			});
-		$('body').append(t);
 
-		return t;
+		var a = $('<img src="assets/title_a.png">')
+			.css({
+				position: 'absolute'
+			});
+		var b = $('<img src="assets/title_b.png">')
+			.css({
+				position: 'absolute'
+			});
+		div.append(a);
+		// div.append(b);
+		$('body').append(div);
+
+		return div;
 	}();
 
 	var onInput = function (m) {

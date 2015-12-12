@@ -152,10 +152,21 @@ var World = function () {
 		return targets.length === 0;
 	};
 
+	var tmpColor = [
+		// {r: 0.169, g: 0.367, b: 0.91}
+
+	];
+
+	var THREE = require('three');
+	var tmpColor = [
+		new THREE.Color('rgb(186, 87, 70)'),
+		new THREE.Color('rgb(99, 161, 93)'),
+		new THREE.Color('rgb(55, 116, 196)')
+	];
 	// where mode is blue, red or green
 	// demo is whether to load a playable player
 	this.loadLevel = function (levelToLoad, input, mode) {
-		var color = {r: 0.169, g: 0.367, b: 0.91};// TODO: define elsewhere
+		var color = tmpColor[Math.floor(Math.random() * 3)];
 
 		var player,
 			stored = storage.level(levelToLoad.id) || [];
@@ -165,6 +176,9 @@ var World = function () {
 		loadBlocks();
 
 		_.each(stored, function (replay) {
+			// todo: remove this
+			color = tmpColor[Math.floor(Math.random() * 3)];
+
 			player = new Player(color);
 			player.setInput(new Input({replay: replay.r}));
 			player.setSpawn(level.spawn);

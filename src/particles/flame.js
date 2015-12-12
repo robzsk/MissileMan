@@ -55,7 +55,6 @@ var Particle = function () {
 	setInc();
 
 	this.update = function (p, a) {
-		if (!started) return;
 		time += inc;
 		if (time >= 1) {
 			setInc();
@@ -72,10 +71,10 @@ var Particle = function () {
 		}
 	};
 
-	var started = false, respawn = false;
+	var respawn = false;
 	this.start = function () {
-		started = true;
 		respawn = true;
+		time = 1;
 	};
 	this.stop = function () {
 		respawn = false;

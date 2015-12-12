@@ -33,8 +33,6 @@ module.exports = function () {
 				} else {
 					mesh[conf.name] = new THREE.Mesh(object.geometry, material);
 				}
-				mesh[conf.name].castShadow = true;
-				mesh[conf.name].receiveShadow = true;
 				complete();
 			};
 			_.each(meshConfigs, function (c) {
@@ -42,6 +40,14 @@ module.exports = function () {
 			});
 
 		};
+
+		var getHex = function () {
+			var c = new THREE.Color();
+			return function (color) {
+				c.setRGB(color.r, color.g, color.b);
+				return c.getHexString();
+			};
+		}();
 
 		this.model = {
 			cubeEmpty: function (n) {
@@ -56,22 +62,40 @@ module.exports = function () {
 				return mesh['target'].clone();
 			},
 
-			man: function (color) {
-				var ret = mesh['man'].clone();
-				// TODO: this wont work when we have different colored players on the screen
-				ret.material.materials[1].color.setRGB(color.r, color.g, color.b);
-				return ret;
-			},
+			man: function () {
+				var clone = {}, cl;
+				var create = function (color) {
+					var m = mesh['man'], hex = getHex(color);
+					if (!clone[hex]) {
+						cl = new THREE.Mesh(m.geometry.clone(), m.material.clone());
+						cl.material.materials[1].color.setRGB(color.r, color.g, color.b);
+						clone[hex] = cl;
+					}
+					return clone[hex].clone();
+				};
+				return function (color) {
+					return create(color);
+				};
+			}(),
 
-			missile: function (color) {
-				var ret = mesh['missile'].clone();
-				ret.rotation.set(0, 0, Math.PI);
-				ret.updateMatrix();
-				// TODO: this wont work when we have different colored players on the screen
-				ret.material.materials[1].color.setRGB(color.r, color.g, color.b);
-				ret.geometry.applyMatrix(ret.matrix);
-				return ret;
-			}
+			missile: function () {
+				var clone = {}, cl;
+				var create = function (color) {
+					var m = mesh['man'], hex = getHex(color);
+					if (!clone[hex]) {
+						cl = new THREE.Mesh(m.geometry.clone(), m.material.clone());
+						cl.rotation.set(0, 0, Math.PI);
+						cl.updateMatrix();
+						cl.geometry.applyMatrix(cl.matrix);
+						cl.material.materials[1].color.setRGB(color.r, color.g, color.b);
+						clone[hex] = cl;
+					}
+					return clone[hex].clone();
+				};
+				return function (color) {
+					return create(color);
+				};
+			}()
 		};
 	};
 
