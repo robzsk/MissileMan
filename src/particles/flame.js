@@ -17,7 +17,7 @@ void main() {
 	pos.x = position.x + (exponentialOut(time) * velocity.x);
 	pos.y = position.y + (exponentialOut(time) * velocity.y);
 	vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-	gl_PointSize = 7.0;
+	gl_PointSize = 9.0;
 	gl_Position = projectionMatrix * mvPosition;
 }`;
 

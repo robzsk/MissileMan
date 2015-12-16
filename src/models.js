@@ -1,45 +1,47 @@
 module.exports = {
 	player: {
-		'name': 'CubeGeometry.3',
-		'materials': [{
-			'transparent': false,
-			'DbgIndex': 0,
-			'blending': 'NormalBlending',
-			'colorEmissive': [0, 0, 0],
-			'wireframe': false,
-			'DbgName': 'Body',
-			'shading': 'lambert',
-			'colorDiffuse': [1, 1, 1],
-			'depthWrite': true,
-			'depthTest': true,
-			'visible': true,
-			'opacity': 1
-		}, {
-			'transparent': false,
-			'DbgIndex': 1,
-			'blending': 'NormalBlending',
-			'colorEmissive': [0, 0, 0],
-			'wireframe': false,
-			'DbgName': 'Head',
-			'shading': 'lambert',
-			'colorDiffuse': [0.169, 0.367, 0.91],
-			'depthWrite': true,
-			'depthTest': true,
-			'visible': true,
-			'opacity': 1
-		}],
-		'normals': [0, 0, 1],
+		'uvs': [],
+		'name': 'Cube.003Geometry',
+		'vertices': [-0.2, -0.5, 0, 0.2, 0.1, -0, 0.2, -0.5, 0, -0.2, 0.1, -0, -0.2, 0.1, -0, -0.2, 0.5, -0, 0.2, 0.1, -0, 0.2, 0.5, -0],
 		'metadata': {
-			'normals': 1,
-			'generator': 'io_three',
-			'materials': 2,
 			'type': 'Geometry',
 			'version': 3,
 			'faces': 2,
-			'vertices': 6
+			'uvs': 0,
+			'vertices': 8,
+			'materials': 2,
+			'generator': 'io_three',
+			'normals': 1
 		},
-		'vertices': [0.169947, -0.50984, -0, -0.169947, -0.50984, -0, -0.169947, 0.50984, -0, 0.169947, 0.50984, 0, -0.169947, 0.169947, -0, 0.169947, 0.169947, -0],
-		'faces': [35, 5, 3, 2, 4, 1, 0, 0, 0, 0, 35, 0, 5, 4, 1, 0, 0, 0, 0, 0]
+		'materials': [{
+			'opacity': 1,
+			'DbgIndex': 0,
+			'transparent': false,
+			'DbgName': 'Material.002',
+			'colorEmissive': [0, 0, 0],
+			'shading': 'lambert',
+			'blending': 'NormalBlending',
+			'depthTest': true,
+			'colorDiffuse': [0.8, 0.8, 0.8],
+			'wireframe': false,
+			'visible': true,
+			'depthWrite': true
+		}, {
+			'opacity': 1,
+			'DbgIndex': 1,
+			'transparent': false,
+			'DbgName': 'Material.003',
+			'colorEmissive': [0, 0, 0],
+			'shading': 'lambert',
+			'blending': 'NormalBlending',
+			'depthTest': true,
+			'colorDiffuse': [0, 0, 1],
+			'wireframe': false,
+			'visible': true,
+			'depthWrite': true
+		}],
+		'faces': [35, 3, 0, 2, 1, 0, 0, 0, 0, 0, 35, 7, 5, 4, 6, 1, 0, 0, 0, 0],
+		'normals': [0, 0, 1]
 	},
 	empty: {
 		'metadata': {
