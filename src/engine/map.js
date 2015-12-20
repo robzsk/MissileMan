@@ -8,14 +8,14 @@
 //  8      16
 // 32  64 128
 var raw = [
-  [ { a: [0, 1], b: [-1, 1], n: [0, -1] }, { a: [0, 2], b: [0, 1], n: [1, 0] } ], // 1
-  [ { a: [0, 1], b: [0, 2], n: [-1, 0] }, { a: [1, 1], b: [0, 1], n: [0, -1] }, { a: [1, 2], b: [1, 1], n: [1, 0] }], // 2
-  [ { a: [2, 1], b: [1, 1], n: [0, -1] }, { a: [1, 1], b: [1, 2], n: [-1, 0] } ], // 3
-  [ { a: [-1, 1], b: [0, 1], n: [0, 1] }, { a: [0, 1], b: [0, 0], n: [1, 0] }, { a: [0, 0], b: [-1, 0], n: [0, -1] } ], // 4
-  [ { a: [1, 1], b: [2, 1], n: [0, 1] }, { a: [1, 0], b: [1, 1], n: [-1, 0] }, { a: [2, 0], b: [1, 0], n: [0, -1] } ], // 5
-  [ { a: [-1, 0], b: [0, 0], n: [0, 1] }, { a: [0, 0], b: [0, -1], n: [1, 0] } ], // 6
-  [ { a: [0, -1], b: [0, 0], n: [-1, 0] }, { a: [0, 0], b: [1, 0], n: [0, 1] }, { a: [1, 0], b: [1, -1], n: [1, 0] } ], // 7
-  [ { a: [1, -1], b: [1, 0], n: [-1, 0] }, { a: [1, 0], b: [2, 0], n: [0, 1] } ], // 8
+	[ { a: [0, 1], b: [-1, 1], n: [0, -1] }, { a: [0, 2], b: [0, 1], n: [1, 0] } ], // 1
+	[ { a: [0, 1], b: [0, 2], n: [-1, 0] }, { a: [1, 1], b: [0, 1], n: [0, -1] }, { a: [1, 2], b: [1, 1], n: [1, 0] }], // 2
+	[ { a: [2, 1], b: [1, 1], n: [0, -1] }, { a: [1, 1], b: [1, 2], n: [-1, 0] } ], // 3
+	[ { a: [-1, 1], b: [0, 1], n: [0, 1] }, { a: [0, 1], b: [0, 0], n: [1, 0] }, { a: [0, 0], b: [-1, 0], n: [0, -1] } ], // 4
+	[ { a: [1, 1], b: [2, 1], n: [0, 1] }, { a: [1, 0], b: [1, 1], n: [-1, 0] }, { a: [2, 0], b: [1, 0], n: [0, -1] } ], // 5
+	[ { a: [-1, 0], b: [0, 0], n: [0, 1] }, { a: [0, 0], b: [0, -1], n: [1, 0] } ], // 6
+	[ { a: [0, -1], b: [0, 0], n: [-1, 0] }, { a: [0, 0], b: [1, 0], n: [0, 1] }, { a: [1, 0], b: [1, -1], n: [1, 0] } ], // 7
+	[ { a: [1, -1], b: [1, 0], n: [-1, 0] }, { a: [1, 0], b: [2, 0], n: [0, 1] } ], // 8
 ];
 
 // 256 permutations of lines which could be surrounding the player
@@ -28,82 +28,86 @@ var _ = require('underscore');
 var Line = require('./line');
 
 var Map = function () {
-  var cells = [],
-    tcell = function (tx, ty) { return cells[ty][tx]; };
+	var cells = [],
+		tcell = function (tx, ty) { return cells[ty][tx]; };
 
-  this.clear = function () {
-    cells = [];
-  };
+	this.clear = function () {
+		cells = [];
+	};
 
-  this.removeBlock = function (x, y) {
-    cells[y][x] = 0;
-  };
+	this.removeBlock = function (x, y) {
+		cells[y][x] = 0;
+	};
 
-  this.addBlocks = function (blocks) {
-    cells = blocks;
-  };
+	this.addBlocks = function (blocks) {
+		cells = blocks;
+	};
 
-  this.checkCollides = function () {
-    var collision, line = new Line(), x, y;
-    var checkRawLines = function (i, handler, entity, layer) {
-      _.each(raw[i], function (l) {
-        line.set(l, x, y);
-        _.each(entity.getPoints(), function (p) {
-          collision = line.detectCollision(p);
-          if (collision) {
-            collision.x = x + add[i][0];
-            collision.y = y + add[i][1];
-            handler(entity, collision, layer);
-          }
-        });
-      });
-    };
-    return function (entity, layer, handler) {
-      x = Math.floor(entity.position().x);
-      y = Math.floor(entity.position().y);
-      _.each(add, function (a, n) {
-        if (tcell(x + a[0], y + a[1]) === layer) {
-          checkRawLines(n, handler, entity, layer);
-        }
-      });
-    };
-  }();
+	this.setBlock = function (x, y, mask) {
+		cells[y][x] = mask;
+	};
 
-  this.handleCollides = function () {
-    var collision, pool = [];
-    var getOptimisedLines = function (entity, layer) {
-      var x = Math.floor(entity.position().x),
-        y = Math.floor(entity.position().y),
-        mask = 0,
-        ret = [];
-      _.each(add, function (a) {
-        mask += tcell(x + a[0], y + a[1]) === layer ? a[2] : 0;
-      });
-      _.each(optimised[mask], function (l) {
-        var line;
-        // allocate a new line from the pool
-        if (pool.length <= ret.length) {
-          line = new Line(l, x, y);
-          pool.push(line);
-        } else {
-          line = pool[ret.length].set(l, x, y);
-        }
-        ret.push(line);
-      });
-      return ret;
-    };
-    return function (entity, layer) {
-      var lines = getOptimisedLines(entity, layer);
-      _.each(lines, function (l) {
-        _.each(entity.getPoints(), function (p) {
-          collision = l.detectCollision(p);
-          if (collision) {
-            entity.handleCollision(collision);
-          }
-        });
-      });
-    };
-  }();
+	this.checkCollides = function () {
+		var collision, line = new Line(), x, y;
+		var checkRawLines = function (i, handler, entity, layer) {
+			_.each(raw[i], function (l) {
+				line.set(l, x, y);
+				_.each(entity.getPoints(), function (p) {
+					collision = line.detectCollision(p);
+					if (collision) {
+						collision.x = x + add[i][0];
+						collision.y = y + add[i][1];
+						handler(entity, collision, layer);
+					}
+				});
+			});
+		};
+		return function (entity, layer, handler) {
+			x = Math.floor(entity.position().x);
+			y = Math.floor(entity.position().y);
+			_.each(add, function (a, n) {
+				if (tcell(x + a[0], y + a[1]) === layer) {
+					checkRawLines(n, handler, entity, layer);
+				}
+			});
+		};
+	}();
+
+	this.handleCollides = function () {
+		var collision, pool = [];
+		var getOptimisedLines = function (entity, layer) {
+			var x = Math.floor(entity.position().x),
+				y = Math.floor(entity.position().y),
+				mask = 0,
+				ret = [];
+			_.each(add, function (a) {
+				mask += tcell(x + a[0], y + a[1]) === layer ? a[2]: 0;
+			});
+			_.each(optimised[mask], function (l) {
+				var line;
+				// allocate a new line from the pool
+				if (pool.length <= ret.length) {
+					line = new Line(l, x, y);
+					pool.push(line);
+				} else {
+					line = pool[ret.length].set(l, x, y);
+				}
+				ret.push(line);
+			});
+			return ret;
+		};
+		return function (entity, layer) {
+			var lines = getOptimisedLines(entity, layer);
+			_.each(lines, function (l) {
+				_.each(entity.getPoints(), function (p) {
+					collision = l.detectCollision(p);
+					if (collision) {
+						entity.handleCollision(collision);
+					}
+				});
+			});
+		};
+	}();
 
 };
 

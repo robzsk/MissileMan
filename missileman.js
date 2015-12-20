@@ -23,7 +23,7 @@
 
 	var loadLevel = function (p) {
 		loop.reset();
-		world.loadLevel(levels.load(currentLevel), p);
+		world.loadLevel(levels.load(currentLevel), p, 'red');
 	};
 
 	var nextLevel = function (p) {
@@ -32,7 +32,7 @@
 		if (currentLevel >= levels.total()) {
 			currentLevel = 0;
 		}
-		world.loadLevel(levels.load(currentLevel), p);
+		world.loadLevel(levels.load(currentLevel), p, 'red');
 	};
 
 	var showTitle = function () {

@@ -20,6 +20,12 @@ var World = function () {
 		level,
 		playerToWatch;
 
+	var MASK = {
+		empty: 0,
+		wall: 1,
+		target: 2
+	};
+
 	EventEmitter.call(this);
 
 	var save = function () {
@@ -45,9 +51,9 @@ var World = function () {
 			}
 		};
 		return function (player, collision, type) {
-			if (type === 1) {
+			if (type === MASK.wall) {
 				killPlayer(player);
-			} else if (type === 2) {
+			} else if (type === MASK.target) {
 				_.every(targets, function (t) {
 					if (t.position.x === collision.x && t.position.y === collision.y) {
 						scene.remove(t);
@@ -100,11 +106,8 @@ var World = function () {
 		_.each(blocks, function (row, y) {
 			_.each(row, function (cell, x) {
 				var cube;
-				if (cell === 1) {
+				if (cell === MASK.wall) {
 					cube = assets.model.cubeSolid();
-				} else if (cell === 2) {
-					cube = assets.model.cubeTarget();
-					targets.push(cube);
 				}
 				if (cube) {
 					cube.position.set(x, y, 0);
@@ -115,15 +118,23 @@ var World = function () {
 
 	};
 
+	var addTarget = function (v, color) {
+		var target = assets.model.cubeTarget();
+		targets.push(target);
+		target.position.set(v.x, v.y, 0);
+		scene.add(target);
+		map.setBlock(v.x, v.y, MASK.target);
+	};
+
 	this.update = function (ticks, step) {
 		_.each(players, function (p) {
 			p.update(ticks, step);
 			if (p.isMan()) {
-				map.handleCollides(p, 1);
+				map.handleCollides(p, MASK.wall);
 			} else {
-				map.checkCollides(p, 1, handleCollision);
+				map.checkCollides(p, MASK.wall, handleCollision);
 			}
-			map.checkCollides(p, 2, handleCollision);
+			map.checkCollides(p, MASK.target, handleCollision);
 		});
 	};
 
@@ -152,36 +163,40 @@ var World = function () {
 		return targets.length === 0;
 	};
 
-	var tmpColor = [
-		// {r: 0.169, g: 0.367, b: 0.91}
-
-	];
-
 	var THREE = require('three');
-	var tmpColor = [
-		new THREE.Color('rgb(186, 87, 70)'),
-		new THREE.Color('rgb(99, 161, 93)'),
-		new THREE.Color('rgb(55, 116, 196)')
-	];
+	var colorSelector = {
+		red: new THREE.Color('rgb(186, 87, 70)'),
+		green: new THREE.Color('rgb(99, 161, 93)'),
+		blue: new THREE.Color('rgb(55, 116, 196)')
+	};
+
 	// where mode is blue, red or green
 	// demo is whether to load a playable player
-	this.loadLevel = function (levelToLoad, input, mode) {
-		var color = tmpColor[Math.floor(Math.random() * 3)];
+	this.loadLevel = function (levelToLoad, input, colorMode) {
+		var color = colorSelector[colorMode];
 
-		var player,
+		var player, spawn,
 			stored = storage.level(levelToLoad.id) || [];
 
 		clear();
 		level = levelToLoad;
 		loadBlocks();
 
+		_.each(level.target, function (v, k) {
+			addTarget(v, k);
+		});
+
+		spawn = JSON.parse(JSON.stringify(level.spawn.red));
+		spawn.x += 0.5;
+		spawn.y += 0.5;
+
 		_.each(stored, function (replay) {
 			// todo: remove this
-			color = tmpColor[Math.floor(Math.random() * 3)];
+			color = colorSelector[colorMode];
 
 			player = new Player(color);
 			player.setInput(new Input({replay: replay.r}));
-			player.setSpawn(level.spawn);
+			player.setSpawn(spawn);
 			player.revive();
 			addPlayer(player, color);
 		});
@@ -189,7 +204,7 @@ var World = function () {
 		if (input) {
 			player = new Player(color);
 			player.setInput(input);
-			player.setSpawn(level.spawn);
+			player.setSpawn(spawn);
 			player.revive();
 			addPlayer(player, color);
 			playerToWatch = player;
