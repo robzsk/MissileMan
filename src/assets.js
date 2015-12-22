@@ -59,9 +59,22 @@ module.exports = function () {
 			},
 
 			cubeTarget: function () {
-				return mesh['target'].clone();
-			},
+				var clone = {}, cl;
+				var create = function (color) {
+					var m = mesh['target'], hex = getHex(color);
+					if (!clone[hex]) {
+						cl = new THREE.Mesh(m.geometry.clone(), m.material.clone());
+						cl.material.color.setRGB(color.r, color.g, color.b);
+						clone[hex] = cl;
+					}
+					return clone[hex].clone();
+				};
+				return function (color) {
+					return create(color);
+				};
+			}(),
 
+			// TODO: there is a bit of repetition here. above and below
 			man: function () {
 				var clone = {}, cl;
 				var create = function (color) {

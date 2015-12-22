@@ -170,6 +170,8 @@ var Player = function (color) {
 		return explosion.particleSystem;
 	};
 
+	this.getColor = function () { return color; };
+
 	this.position = entity.position;
 	this.rotation = entity.rotation;
 	this.getPoints = entity.getPoints;

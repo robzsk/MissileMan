@@ -2,7 +2,8 @@
 
 var _ = require('underscore'),
 	util = require('util'),
-	EventEmitter = require('events').EventEmitter;
+	EventEmitter = require('events').EventEmitter,
+	THREE = require('three');
 
 var World = function () {
 	const assets = require('./assets'),
@@ -15,8 +16,8 @@ var World = function () {
 
 	var self = this,
 		map = new Map(),
-		players = [],
-		targets = [],
+		players,
+		targets,
 		level,
 		playerToWatch;
 
@@ -28,55 +29,64 @@ var World = function () {
 
 	EventEmitter.call(this);
 
-	var save = function () {
-		var save = [];
-		_.each(players, function (player) {
-			save.unshift({ r: player.getSerializedInput() });
-		});
-		storage.level(level.id, save);
-	};
-
 	var handleCollision = function () {
+		var saveReplays = function () {
+			var save = { };
+			_.each(players, function (list, color) {
+				save[color] = save[color] || [];
+				_.each(list, function (player) {
+					save[color].unshift({ r: player.getSerializedInput() });
+				});
+			});
+			storage.level(level.id, save);
+		};
+
 		var killPlayer = function (player) {
 			scene.remove(player.avatar.man);
 			scene.remove(player.avatar.missile);
 			if (!player.isDead()) {
 				player.kill();
-				if (player === players[0]) {
-					save();
-				}
 				if (player === playerToWatch) {
+					saveReplays();
 					self.emit('world.player.killed');
 				}
 			}
 		};
 		return function (player, collision, type) {
+			var playerColor = player.getColor().getHexString();
 			if (type === MASK.wall) {
 				killPlayer(player);
 			} else if (type === MASK.target) {
-				_.every(targets, function (t) {
-					if (t.position.x === collision.x && t.position.y === collision.y) {
-						scene.remove(t);
-						map.removeBlock(collision.x, collision.y);
-						targets = _.without(targets, t);
-						return false;
+				_.each(targets, function (list, color) {
+					if (playerColor === color) {
+						_.every(list, function (t, k) {
+							if (t.position.x === collision.x && t.position.y === collision.y) {
+								scene.remove(t);
+								map.removeBlock(collision.x, collision.y);
+								targets[color] = _.without(targets[color], t);
+								return false;
+							}
+							return true;
+						});
 					}
-					return true;
 				});
 				killPlayer(player);
 			}
 		};
 	}();
 
-	var removeLastPlayer = function () {
-		var player = players.pop();
+	var removeLastPlayer = function (color) {
+		var player = players[color].pop();
 		scene.remove(player.avatar.man);
 		scene.remove(player.avatar.missile);
 		scene.remove(player.getFlame());
 		scene.remove(player.getExplosion());
 	};
+
 	var addPlayer = function (player, color) {
-		players.unshift(player);
+		var hex = color.getHexString();
+		players[hex] = players[hex] || [];
+		players[hex].unshift(player);
 		if (!player.avatar) {
 			player.avatar = {};
 		}
@@ -86,15 +96,15 @@ var World = function () {
 		scene.add(player.avatar.missile);
 		scene.add(player.getFlame());
 		scene.add(player.getExplosion());
-		if (players.length > level.max) {
-			removeLastPlayer();
+		if (players[hex].length > level.max) {
+			removeLastPlayer(hex);
 		}
 	};
 
 	var clear = function () {
 		playerToWatch = undefined;
-		players = [];
-		targets = [];
+		players = { };
+		targets = { };
 		map.clear();
 		scene.clear();
 	};
@@ -118,39 +128,45 @@ var World = function () {
 
 	};
 
-	var addTarget = function (v, color) {
-		var target = assets.model.cubeTarget();
-		targets.push(target);
+	var addTarget = function (v, hex) {
+		var color = new THREE.Color(parseInt(hex, 16)),
+			target = assets.model.cubeTarget(color);
+		targets[hex] = targets[hex] || [];
+		targets[hex].push(target);
 		target.position.set(v.x, v.y, 0);
 		scene.add(target);
 		map.setBlock(v.x, v.y, MASK.target);
 	};
 
 	this.update = function (ticks, step) {
-		_.each(players, function (p) {
-			p.update(ticks, step);
-			if (p.isMan()) {
-				map.handleCollides(p, MASK.wall);
-			} else {
-				map.checkCollides(p, MASK.wall, handleCollision);
-			}
-			map.checkCollides(p, MASK.target, handleCollision);
+		_.each(players, function (v, k) {
+			_.each(v, function (p) {
+				p.update(ticks, step);
+				if (p.isMan()) {
+					map.handleCollides(p, MASK.wall);
+				} else {
+					map.checkCollides(p, MASK.wall, handleCollision);
+				}
+				map.checkCollides(p, MASK.target, handleCollision);
+			});
 		});
 	};
 
 	this.render = function (dt) {
-		_.each(players, function (p) {
-			p.avatar.missile.visible = p.avatar.man.visible = false;
-			if (p.isMan()) {
-				p.avatar.man.visible = true;
-				p.avatar.man.position.set(p.position().x, p.position().y, 0.5);// TODO: set the z position elsewhere
-				p.avatar.man.scale.set(p.getScale(), p.getScale(), p.getScale());
-			} else {
-				p.avatar.missile.visible = true;
-				p.avatar.missile.rotation.set(0, 0, p.rotation().z, 'ZYX');
-				p.avatar.missile.position.set(p.position().x, p.position().y, 0.5);// TODO: set the z position elsewhere
-				p.avatar.missile.scale.set(p.getScale(), p.getScale(), p.getScale());
-			}
+		_.each(players, function (v, k) {
+			_.each(v, function (p) {
+				p.avatar.missile.visible = p.avatar.man.visible = false;
+				if (p.isMan()) {
+					p.avatar.man.visible = true;
+					p.avatar.man.position.set(p.position().x, p.position().y, 0.5);// TODO: set the z position elsewhere
+					p.avatar.man.scale.set(p.getScale(), p.getScale(), p.getScale());
+				} else {
+					p.avatar.missile.visible = true;
+					p.avatar.missile.rotation.set(0, 0, p.rotation().z, 'ZYX');
+					p.avatar.missile.position.set(p.position().x, p.position().y, 0.5);// TODO: set the z position elsewhere
+					p.avatar.missile.scale.set(p.getScale(), p.getScale(), p.getScale());
+				}
+			});
 		});
 
 		if (playerToWatch) {
@@ -160,56 +176,52 @@ var World = function () {
 	};
 
 	this.isComplete = function () {
-		return targets.length === 0;
+		if (playerToWatch.isDead() && targets[playerToWatch.getColor().getHexString()].length <= 0) {
+			return true;
+		}
+		return false;
 	};
 
-	var THREE = require('three');
-	var colorSelector = {
-		red: new THREE.Color('rgb(186, 87, 70)'),
-		green: new THREE.Color('rgb(99, 161, 93)'),
-		blue: new THREE.Color('rgb(55, 116, 196)')
-	};
-
-	// where mode is blue, red or green
-	// demo is whether to load a playable player
 	this.loadLevel = function (levelToLoad, input, colorMode) {
-		var color = colorSelector[colorMode];
+		var player, stored, color = new THREE.Color(parseInt(colorMode, 16));
+		stored = storage.level(levelToLoad.id) || [];
 
-		var player, spawn,
-			stored = storage.level(levelToLoad.id) || [];
+		var getSpawn = function (color) {
+			var spawn = JSON.parse(JSON.stringify(level.spawn[color]));
+			spawn.x += 0.5;
+			spawn.y += 0.5;
+			return spawn;
+		};
 
 		clear();
 		level = levelToLoad;
 		loadBlocks();
 
-		_.each(level.target, function (v, k) {
-			addTarget(v, k);
+		_.each(level.target, function (target, color) {
+			addTarget(target, color);
 		});
 
-		spawn = JSON.parse(JSON.stringify(level.spawn.red));
-		spawn.x += 0.5;
-		spawn.y += 0.5;
-
-		_.each(stored, function (replay) {
-			// todo: remove this
-			color = colorSelector[colorMode];
-
-			player = new Player(color);
-			player.setInput(new Input({replay: replay.r}));
-			player.setSpawn(spawn);
-			player.revive();
-			addPlayer(player, color);
+		_.each(stored, function (list, color) {
+			_.each(list, function (replay) {
+				var c = new THREE.Color(parseInt(color, 16));
+				player = new Player(c);
+				player.setInput(new Input({replay: replay.r}));
+				player.setSpawn(getSpawn(color));
+				player.revive();
+				addPlayer(player, c);
+			});
 		});
 
 		if (input) {
 			player = new Player(color);
 			player.setInput(input);
-			player.setSpawn(spawn);
+			player.setSpawn(getSpawn(colorMode));
 			player.revive();
 			addPlayer(player, color);
 			playerToWatch = player;
 		} else {
-			playerToWatch = players[Math.floor(Math.random() * players.length)];
+			// TODO: watch a random player when we don't have input
+			// playerToWatch = players[Math.floor(Math.random() * players.length)];
 		}
 	};
 

@@ -21,9 +21,16 @@
 
 	var currentLevel = 0;
 
+	var THREE = require('three');
+	var c = {
+		red: new THREE.Color('rgb(186, 87, 70)'),
+		green: new THREE.Color('rgb(99, 161, 93)'),
+		blue: new THREE.Color('rgb(55, 116, 196)')
+	};
+
 	var loadLevel = function (p) {
 		loop.reset();
-		world.loadLevel(levels.load(currentLevel), p, 'red');
+		world.loadLevel(levels.load(currentLevel), p, c.red.getHexString());
 	};
 
 	var nextLevel = function (p) {
@@ -32,7 +39,7 @@
 		if (currentLevel >= levels.total()) {
 			currentLevel = 0;
 		}
-		world.loadLevel(levels.load(currentLevel), p, 'red');
+		world.loadLevel(levels.load(currentLevel), p, c.red.getHexString());
 	};
 
 	var showTitle = function () {
