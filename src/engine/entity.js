@@ -90,6 +90,7 @@ var Entity = function (points) {
 		return pointsToWorld;
 	};
 
+	// with a line
 	this.handleCollision = function (collision) {
 		position.add(collision.offset);
 		velocity.sub(collision.normal.multiplyScalar(velocity.dot(collision.normal)));

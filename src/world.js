@@ -29,51 +29,50 @@ var World = function () {
 
 	EventEmitter.call(this);
 
-	var handleCollision = function () {
-		var saveReplays = function () {
-			var save = { };
-			_.each(players, function (list, color) {
-				save[color] = save[color] || [];
-				_.each(list, function (player) {
-					save[color].unshift({ r: player.getSerializedInput() });
-				});
+	var saveReplays = function () {
+		var save = { };
+		_.each(players, function (list, color) {
+			save[color] = save[color] || [];
+			_.each(list, function (player) {
+				save[color].unshift({ r: player.getSerializedInput() });
 			});
-			storage.level(level.id, save);
-		};
+		});
+		storage.level(level.id, save);
+	};
 
-		var killPlayer = function (player) {
-			scene.remove(player.avatar.man);
-			scene.remove(player.avatar.missile);
-			if (!player.isDead()) {
-				player.kill();
-				if (player === playerToWatch) {
-					saveReplays();
-					self.emit('world.player.killed');
+	var killPlayer = function (player) {
+		scene.remove(player.avatar.man);
+		scene.remove(player.avatar.missile);
+		if (!player.isDead()) {
+			player.kill();
+			if (player === playerToWatch) {
+				saveReplays();
+				self.emit('world.player.killed');
+			}
+		}
+	};
+
+	var handleCollision = function (player, collision, type) {
+		var playerColor = player.getColor().getHexString();
+		if (type === MASK.wall) {
+			killPlayer(player);
+		} else if (type === MASK.target) {
+			_.each(targets, function (list, color) {
+				if (playerColor === color) {
+					_.every(list, function (t, k) {
+						if (t.position.x === collision.x && t.position.y === collision.y) {
+							scene.remove(t);
+							map.removeBlock(collision.x, collision.y);
+							targets[color] = _.without(targets[color], t);
+							return false;
+						}
+						return true;
+					});
 				}
-			}
-		};
-		return function (player, collision, type) {
-			var playerColor = player.getColor().getHexString();
-			if (type === MASK.wall) {
-				killPlayer(player);
-			} else if (type === MASK.target) {
-				_.each(targets, function (list, color) {
-					if (playerColor === color) {
-						_.every(list, function (t, k) {
-							if (t.position.x === collision.x && t.position.y === collision.y) {
-								scene.remove(t);
-								map.removeBlock(collision.x, collision.y);
-								targets[color] = _.without(targets[color], t);
-								return false;
-							}
-							return true;
-						});
-					}
-				});
-				killPlayer(player);
-			}
-		};
-	}();
+			});
+			killPlayer(player);
+		}
+	};
 
 	var removeLastPlayer = function (color) {
 		var player = players[color].pop();
@@ -139,15 +138,33 @@ var World = function () {
 	};
 
 	this.update = function (ticks, step) {
-		_.each(players, function (v, k) {
-			_.each(v, function (p) {
+		_.each(players, function (list, color) {
+			_.each(list, function (p) {
 				p.update(ticks, step);
-				if (p.isMan()) {
-					map.handleCollides(p, MASK.wall);
-				} else {
-					map.checkCollides(p, MASK.wall, handleCollision);
+				if (!p.isDead()) {
+					// collide with map
+					if (p.isMan()) {
+						map.handleCollides(p, MASK.wall);
+					} else {
+						map.checkCollides(p, MASK.wall, handleCollision);
+					}
+
+					// collide with target
+					map.checkCollides(p, MASK.target, handleCollision);
+
+					// check collisions with players of different color
+					_.each(players, function (otherList, otherColor) {
+						if (color !== otherColor) {
+							_.each(otherList, function (other) {
+								if (!other.isDead() && p.collideWithOther(other)) {
+									killPlayer(other);
+									killPlayer(p);
+								}
+							});
+						}
+					});
+
 				}
-				map.checkCollides(p, MASK.target, handleCollision);
 			});
 		});
 	};

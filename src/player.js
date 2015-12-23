@@ -1,5 +1,6 @@
 'use strict';
-var THREE = require('three'),
+var _ = require('underscore'),
+	THREE = require('three'),
 	thrust = require('./engine/thrust'),
 	Entity = require('./engine/entity'),
 	Morph = require('./morph'),
@@ -156,6 +157,18 @@ var Player = function (color) {
 		flame.clear();
 		explosion.clear();
 		this.setInput(input);
+	};
+
+	this.collideWithOther = function (other) {
+		var collision = false;
+		_.each(entity.getPoints(), function (p1) {
+			_.each(other.getPoints(), function (p2) {
+				if (Math.pow(p2.x - p1.x, 2) + Math.pow(p1.y - p2.y, 2) <= Math.pow(p1.r + p2.r, 2)) {
+					collision = true;
+				}
+			});
+		});
+		return collision;
 	};
 
 	this.getSerializedInput = function () {
