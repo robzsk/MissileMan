@@ -1,0 +1,47 @@
+{
+	"29": {
+		"left": false,
+		"right": false,
+		"morph": true
+	},
+	"30": {
+		"left": false,
+		"right": false,
+		"morph": false
+	},
+	"32": {
+		"left": false,
+		"right": true,
+		"morph": false
+	},
+	"49": {
+		"left": false,
+		"right": false,
+		"morph": false
+	},
+	"58": {
+		"left": true,
+		"right": false,
+		"morph": false
+	},
+	"119": {
+		"left": false,
+		"right": false,
+		"morph": false
+	},
+	"140": {
+		"left": true,
+		"right": false,
+		"morph": false
+	},
+	"141": {
+		"left": false,
+		"right": false,
+		"morph": false
+	},
+	"150": {
+		"left": false,
+		"right": true,
+		"morph": false
+	}
+}

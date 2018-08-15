@@ -1,88 +1,43 @@
-(function () {
-	'use strict';
+// this file is a work in progress and serves as a simple entry point for now
+const application = () => {
+	const replayData = require('./fixture/replay');
+	const scene = require('./src/scene')(document.body);
+	const assets = require('./src/assets');
+	const world = require('./src/world')(scene);
+	const levels = require('./src/levels');
+	const createLoop = require('./src/engine').loop;
+	const createInput = require('./src/engine').input;
 
-	const _ = require('underscore'),
-		$ = require('jquery'),
-		Title = require('./src/overlay/title'),
-		World = require('./src/world'),
-		Input = require('./src/engine/input'),
-		assets = require('./src/assets'),
-		levels = require('./src/levels'),
-		loop = require('./src/engine/loop');
-
-	var title = new Title(),
-		world = new World(),
-		spawnPoints, job;
-
-	var input = new Input({
-		keys: { left: 37, right: 39, jump: 38, morph: 67 },
-		gamepad: { index: 0 }, buttons: { left: 14, right: 15, jump: 0, morph: 1}
+	const replay = createInput({ replay: replayData });
+	const playerInput = createInput({
+			keys: { left: 37, right: 39, morph: 67 },
+			gamepad: { index: 0 }, buttons: { left: 14, right: 15, morph: 1 },
 	});
 
-	var currentLevel = 0;
+	const start = () => {
+	  const loop = createLoop();
+	  loop.on('update', world.update);
+	  loop.on('render', world.render);
 
-	var THREE = require('three');
-	var c = {
-		red: new THREE.Color('rgb(186, 87, 70)'),
-		green: new THREE.Color('rgb(99, 161, 93)'),
-		blue: new THREE.Color('rgb(55, 116, 196)')
-	};
+		const load = () => {
+			// TODO: setup the level with the player input/replays before load
+			// world.load(levels.load(0), assets, playerInput);
 
-	var loadLevel = function (p) {
-		loop.reset();
-		world.loadLevel(levels.load(currentLevel), p, c.red.getHexString());
-	};
-
-	var nextLevel = function (p) {
-		loop.reset();
-		currentLevel += 1;
-		if (currentLevel >= levels.total()) {
-			currentLevel = 0;
+			scene.clear();
+			world.load(levels.load(0), assets, replay);
+			loop.reset();
 		}
-		world.loadLevel(levels.load(currentLevel), p, c.red.getHexString());
+
+		world.on('player.win', replay => {
+			// console.log(replay);
+			setTimeout(load, 1000);
+		});
+
+		load();
+
 	};
 
-	var showTitle = function () {
-		loop.reset();
-		loadLevel();
-		title.fadeFromBlack();
-		title.showTitle();
-	};
+	assets.load().then(start);
+};
 
-	world.on('world.player.killed', function (player) {
-		job = setTimeout(function () {
-			if (world.isComplete()) {
-				if (title.isVisible()) {
-					loadLevel();
-				} else {
-					nextLevel(input);
-				}
-			} else {
-				title.fadeFromBlack();
-				loadLevel(title.isVisible() ? null: input);
-			}
-		}, 1000);
-	});
-
-	title.on('title.playbutton.click', function () {
-		clearTimeout(job);
-		title.hideTitle();
-		title.fadeFromBlack();
-		loadLevel(input);
-		loop.reset();
-	});
-
-	$(document).ready(function () {
-		assets.load(showTitle);
-	});
-
-	loop.on('loop.update', function (ticks, step) {
-		title.update(ticks);
-		world.update(ticks, step);
-	});
-
-	loop.on('loop.render', function (dt) {
-		world.render(dt);
-	});
-
-})();
+document.addEventListener('DOMContentLoaded', application);

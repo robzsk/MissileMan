@@ -1,15 +1,9 @@
-'use strict';
-
-var levels = [
+const levels = [
 	require('./data/level_0'),
 	require('./data/level_1')
 ];
 
 module.exports = {
-	load: function (n) {
-		return levels[n]();
-	},
-	total: function () {
-		return 2;
-	}
+	load: n => levels[n](),
+	total: () => 2,
 };
