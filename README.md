@@ -8,7 +8,7 @@ Install
 =======
 `npm i`
 
-RUN
+Run
 =======
 `npm start`
 
