@@ -13,6 +13,13 @@ Run
 `npm start`
 
 
+Player Controls
+===============
+
+Arrow keys to move left and right
+
+`c` button to morph between man and missile
+
 License
 =======
 
