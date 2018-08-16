@@ -10,6 +10,7 @@ module.exports = scene => {
   let player;
   const api = {};
   let renderer;
+  let timeoutWin;
 
   const addTarget = (position, assets) => {
     const target = assets.model.cubeTarget(color);
@@ -33,8 +34,9 @@ module.exports = scene => {
         map.checkCollides(player, 1, (player, collision, type) => {
           if (!player.isDead()) {
             player.kill();
-            // TODO: factor this out
-            api.emit('player.win', player.getSerializedInput());
+            timeoutWin = setTimeout(() =>
+              api.emit('player.lose', player.getSerializedInput())
+            , 1000);
           }
         });
       }
@@ -48,6 +50,7 @@ module.exports = scene => {
   };
 
   api.load = (level, assets, input) => {
+    clearTimeout(timeoutWin);
     renderer = createRenderer(scene, assets);
     map.addBlocks(level.walls);
     addTarget(level.target, assets);

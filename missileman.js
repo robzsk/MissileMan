@@ -1,3 +1,5 @@
+const log = require('electron').remote.getGlobal('console').log;
+
 // this file is a work in progress and serves as a simple entry point for now
 const application = () => {
 	const replayData = require('./fixture/replay');
@@ -7,6 +9,10 @@ const application = () => {
 	const levels = require('./src/levels');
 	const createLoop = require('./src/engine').loop;
 	const createInput = require('./src/engine').input;
+
+	 // add fader before title
+	const fader = require('./src/overlay/fader')(document.body);
+	const title = require('./src/overlay/title')(document.body);
 
 	const replay = createInput({ replay: replayData });
 	const playerInput = createInput({
@@ -19,25 +25,33 @@ const application = () => {
 	  loop.on('update', world.update);
 	  loop.on('render', world.render);
 
-		const load = () => {
-			// TODO: setup the level with the player input/replays before load
-			// world.load(levels.load(0), assets, playerInput);
+		const load = (input = replay) => {
+		  fader.fadeFromBlack();
 
 			scene.clear();
-			world.load(levels.load(0), assets, replay);
+			world.load(levels.load(0), assets, input);
 			loop.reset();
 		}
 
-		world.on('player.win', replay => {
-			// console.log(replay);
-			setTimeout(load, 1000);
+		world.on('player.lose', replay => {
+			load(createInput({ replay }));
 		});
 
+		title.on('start', () => {
+			title.hide();
+			setTimeout(() => {
+				load(playerInput);
+			}, 1);
+
+		})
+
+		title.show();
 		load();
 
 	};
 
 	assets.load().then(start);
+
 };
 
 document.addEventListener('DOMContentLoaded', application);
