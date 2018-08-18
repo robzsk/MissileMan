@@ -3,6 +3,7 @@ const event = require('minivents');
 
 module.exports = parent => {
   const api = {};
+  let timer = 0;
 
   const container = $('<div/>')
     .css({
@@ -14,45 +15,56 @@ module.exports = parent => {
       top: 0,
       left: 0,
       textAlign: 'center',
-    });
+    })
+    .hide();
   $(parent).append(container);
 
-  const title = $('<div/>')
+  const quit = $('<span/>')
     .css({
-      fontSize: '150px',
-      textShadow: '-5px 5px 0 #3774c4',
+      position: 'fixed',
+      right: '10px',
+      fontSize: '50px',
+      textShadow: '-2px 2px 0 #3774c4',
     })
-    .text('Missileman')
-    .hide();
-  $(container).append(title);
+    .text('(Q)uit');
+  $(container).append(quit);
 
-  const press = $('<div/>')
+  const time = $('<div/>')
     .css({
       fontSize: '50px',
       textShadow: '-2px 2px 0 #3774c4',
-      paddingTop: '350px',
     })
-    .text('press space to start')
-    .hide();
-  $(container).append(press);
+    .text('0.0');
+  $(container).append(time);
 
   const onKey = ev => {
-    if (ev.keyCode === 32) {
-      api.emit('start');
+    if (ev.keyCode === 81) { // q
+      api.emit('quit');
     }
   };
 
+  const getTime = () =>
+    // the game loop code need some work for now
+    // this magic number works on my slow machine
+    ((timer * 1.65) / 100).toFixed(1);
+
   api.show = () => {
+    timer = 0;
     document.body.addEventListener('keydown', onKey);
-    title.show();
-    press.show();
+    container.show();
   };
 
   api.hide = () => {
     document.body.removeEventListener('keydown', onKey);
-    title.hide();
-    press.hide();
+    container.hide();
   };
+
+  api.update = () => {
+    timer += 1;
+    time.text(`${getTime()}`);
+  };
+
+  api.getTime = getTime;
 
   event(api);
   return api;
