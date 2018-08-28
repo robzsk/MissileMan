@@ -59,7 +59,7 @@ module.exports = {
 		'faces': [33, 1, 0, 2, 3, 0, 1, 1, 1],
 		'normals': [0, 0, 0.999969, 0, 0, 1]
 	},
-	solid_1: {
+	solid: {
 		'metadata': {
 			'version': 3,
 			'generator': 'io_three',

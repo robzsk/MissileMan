@@ -1,47 +1,33 @@
 const THREE = require('three');
 const events = require('minivents');
 const createRenderer = require('./renderer');
+const mask = require('./mask');
 
 const color = new THREE.Color('rgb(55, 116, 196)');
 const createPlayer = require('./player');
 const map = require('./map')();
 
-const MASK = {
-  wall: 1,
-  target: 2,
-};
-
 module.exports = scene => {
-  // let player;
   let players = [];
   let target;
   const api = {};
   let renderer;
   let timeoutWin;
 
-  const addTarget = (position, assets) => {
-    const avatar = assets.model.cubeTarget(color);
-    avatar.position.set(position.x, position.y, 0);
-    scene.add(avatar);
-    map.setBlock(position.x, position.y, MASK.target);
-    target = {
-      avatar,
-      position,
-    };
-  };
+  const getPlayerSpawn = map =>
+    map.reduce((a, c, y) => {
+      const n = c.indexOf(mask.PLAYER);
+      if (n !== -1) {
+        a.x = n + 0.5; // 0.5 = spawn in the middle of the block
+        a.y = y + 0.5;
+      }
+      return a;
+    }, { x: 0, y: 0 });
 
-  const removeTarget = position => {
-    if (target) {
-      scene.remove(target.avatar);
-      map.removeBlock(position.x, position.y);
-      target = null;
-    }
-  };
-
-  const addPlayer = (input, assets) => {
+  const addPlayer = (input, assets, spawn) => {
     const player = createPlayer(color, scene, assets);
     player.setInput(input);
-    player.setSpawn({ x: 1.5, y: 18.5 });
+    player.setSpawn(spawn);
     player.revive();
     players.push(player);
   }
@@ -49,13 +35,24 @@ module.exports = scene => {
   api.update = (ticks, step) => {
     players.forEach((player, i) => {
       player.update(ticks, step);
+      // TODO: Reafctor collisions!
       if (!player.isDead()) {
         if (player.isMan()) {
-          map.handleCollides(player, MASK.wall);
+          map.handleCollides(player, mask.WALL);
+          // check missile only
+          map.checkCollides(player, mask.MISSILE, (player, collision, type, x, y) => {
+            if (!player.isDead()) {
+              player.kill();
+              if (i === 0) {
+                timeoutWin = setTimeout(() =>
+                  api.emit('player.lose', player.getSerializedInput())
+                , 1000);
+              }
+            }
+          });
         } else {
-
           // check walls
-          map.checkCollides(player, MASK.wall, (player, collision, type) => {
+          map.checkCollides(player, mask.WALL, (player, collision, type) => {
             if (!player.isDead()) {
               player.kill();
               if (i === 0) {
@@ -67,10 +64,10 @@ module.exports = scene => {
           });
 
           //check target
-          map.checkCollides(player, MASK.target, (player, collision, type, x, y) => {
+          map.checkCollides(player, mask.TARGET, (player, collision, type, x, y) => {
             // TODO: need to check if this is the player or a replay
             if (!player.isDead()) {
-              removeTarget(collision);
+              // removeTarget(collision);
               player.kill();
               if (i === 0) {
                 timeoutWin = setTimeout(() =>
@@ -82,7 +79,6 @@ module.exports = scene => {
         }
       }
     });
-
   };
 
   api.render = dt => {
@@ -92,18 +88,18 @@ module.exports = scene => {
     });
 
     scene.follow(players[0].position());
+    // scene.follow({ x: 15, y: 15 });
     scene.render();
   };
 
   api.load = (level, assets, inputs) => {
     clearTimeout(timeoutWin);
+    const playerSpawn = getPlayerSpawn(level.walls);
     renderer = createRenderer(scene, assets);
     map.addBlocks(level.walls);
-    target = null;
     players = [];
-    addTarget(level.target, assets);
     inputs.forEach(input => {
-      addPlayer(input, assets);
+      addPlayer(input, assets, playerSpawn);
     });
     renderer.addWalls(level.walls);
   };

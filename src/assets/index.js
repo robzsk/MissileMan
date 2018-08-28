@@ -25,17 +25,17 @@ const load = () => new Promise((resolve) => {
 	});
 });
 
-const cubeEmpty = n => mesh['empty'].clone();
-const cubeSolid = n => {
-	const m = mesh[`solid_${n}`];
-	return m && m.clone();
-};
+const cubeEmpty = n => mesh.empty.clone();
 
-const cubeTarget = (() => {
+const wall = () =>
+	mesh.wall.clone();
+
+const target = (() => {
 	const clone = {};
 	let cl;
-	const create = color => {
-		const m = mesh['target'];
+	return () => {
+		const color = new THREE.Color('rgb(55, 116, 196)');
+		const m = wall();
 		const hex = color.getHexString();
 		if (!clone[hex]) {
 			cl = new THREE.Mesh(m.geometry.clone(), m.material.clone());
@@ -44,14 +44,29 @@ const cubeTarget = (() => {
 		}
 		return clone[hex].clone();
 	};
-	return create;
 })();
+
+const missileOnly = (() => {
+	const clone = {};
+	let cl;
+	return () => {
+		const color = new THREE.Color('rgb(99, 161, 93)');
+		const m = wall();
+		const hex = color.getHexString();
+		if (!clone[hex]) {
+			cl = new THREE.Mesh(m.geometry.clone(), m.material.clone());
+			cl.material.color.setRGB(color.r, color.g, color.b);
+			clone[hex] = cl;
+		}
+		return clone[hex].clone();
+	};
+	})();
 
 const man = (() => {
 	const clone = {};
 	let cl;
 	const create = color => {
-		const m = mesh['man'];
+		const m = mesh.man;
 		const hex = color.getHexString();
 		if (!clone[hex]) {
 			cl = new THREE.Mesh(m.geometry.clone(), m.material);
@@ -67,7 +82,7 @@ const missile = (() => {
 	const clone = {};
 	let cl;
 	const create = color => {
-		const m = mesh['man'];
+		const m = mesh.man;
 		const hex = color.getHexString();
 		if (!clone[hex]) {
 			cl = new THREE.Mesh(m.geometry.clone(), m.material);
@@ -85,9 +100,9 @@ const missile = (() => {
 module.exports = {
 	load,
 	model: {
-		cubeEmpty,
-		cubeSolid,
-		cubeTarget,
+		wall,
+		target,
+		missileOnly,
 		man,
 		missile,
 	},

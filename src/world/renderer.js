@@ -1,15 +1,24 @@
-
-const WALL_MASK = {
-  empty: 0,
-  wall: 1
-};
+const mask = require('./mask');
 
 const addWalls = (scene, assets, walls) => {
   walls.forEach((row, y) => {
     row.forEach((cell, x) => {
-      const cube = assets.model.cubeSolid(cell);
+      let cube;
+      switch (cell) {
+        case mask.TARGET:
+          cube = assets.model.target();
+          cube.position.set(x, y, 0);
+          break;
+        case mask.WALL:
+          cube = assets.model.wall();
+          cube.position.set(x, y, 0);
+          break;
+        case mask.MISSILE:
+          cube = assets.model.missileOnly();
+            cube.position.set(x, y, -1);
+          break;
+      }
       if (cube) {
-        cube.position.set(x, y, 0);
         scene.add(cube);
       }
     });
