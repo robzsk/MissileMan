@@ -4,5 +4,6 @@ module.exports = {
   TARGET: 3,
   PLAYER: 4,
   ENEMY: 5,
+  SWITCH: 6,
   EMPTY: 0,
 };

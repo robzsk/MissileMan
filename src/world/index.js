@@ -1,22 +1,24 @@
 const THREE = require('three');
 const events = require('minivents');
-const createRenderer = require('./renderer');
-const mask = require('./mask');
+const { PLAYER, WALL, MISSILE, SWITCH, TARGET } = require('./mask');
 
 const color = new THREE.Color('rgb(55, 116, 196)');
 const createPlayer = require('./player');
-const map = require('./map')();
+const createMap = require('./map');
 
 module.exports = scene => {
+  let map;
+  let targets = [];
+  let switches = [];
   let players = [];
-  let target;
+
   const api = {};
-  let renderer;
-  let timeoutWin;
+
+  let timeouts = [];
 
   const getPlayerSpawn = map =>
     map.reduce((a, c, y) => {
-      const n = c.indexOf(mask.PLAYER);
+      const n = c.indexOf(PLAYER);
       if (n !== -1) {
         a.x = n + 0.5; // 0.5 = spawn in the middle of the block
         a.y = y + 0.5;
@@ -30,7 +32,42 @@ module.exports = scene => {
     player.setSpawn(spawn);
     player.revive();
     players.push(player);
-  }
+  };
+
+  const addTargets = () => {
+    targets.forEach(({ x, y }) => {
+      map.setBlock(x, y, TARGET);
+    });
+  };
+
+  const addSwitches = () => {
+    switches.forEach(({ x, y }) => {
+      map.setBlock(x, y, SWITCH);
+    });
+  };
+
+  const removeSwitch = collision => {
+    const { x, y } = collision;
+    map.removeBlock(collision);
+    switches.forEach((s, i, a) => {
+      if (x === s.x && y === s.y) {
+        a.splice(i, 1);
+      }
+    });
+    if (switches.length === 0) {
+      addTargets();
+    }
+  };
+
+  const removeTarget = collision => {
+    const { x, y } = collision;
+    map.removeBlock(collision);
+    targets.forEach((t, i, a) => {
+      if (x === t.x && y === t.y) {
+        a.splice(i, 1);
+      }
+    });
+  };
 
   api.update = (ticks, step) => {
     players.forEach((player, i) => {
@@ -38,46 +75,75 @@ module.exports = scene => {
       // TODO: Reafctor collisions!
       if (!player.isDead()) {
         if (player.isMan()) {
-          map.handleCollides(player, mask.WALL);
+          map.handleCollides(player, WALL);
           // check missile only
-          map.checkCollides(player, mask.MISSILE, (player, collision, type, x, y) => {
+          map.checkCollides(player, MISSILE, (player, collision, type, x, y) => {
             if (!player.isDead()) {
               player.kill();
               if (i === 0) {
-                timeoutWin = setTimeout(() =>
+                timeouts.push(setTimeout(() =>
                   api.emit('player.lose', player.getSerializedInput())
-                , 1000);
+                , 1000));
               }
             }
           });
+
+          // check switches
+          map.checkCollides(player, SWITCH, (player, collision, type, x, y) => {
+            // TODO: do we need to check if not a replay?
+            removeSwitch(collision);
+          });
+
         } else {
           // check walls
-          map.checkCollides(player, mask.WALL, (player, collision, type) => {
+          map.checkCollides(player, WALL, (player, collision, type) => {
             if (!player.isDead()) {
               player.kill();
               if (i === 0) {
-                timeoutWin = setTimeout(() =>
+                timeouts.push(setTimeout(() =>
                   api.emit('player.lose', player.getSerializedInput())
-                , 1000);
+                , 1000));
               }
             }
           });
 
           //check target
-          map.checkCollides(player, mask.TARGET, (player, collision, type, x, y) => {
+          map.checkCollides(player, TARGET, (player, collision, type, x, y) => {
             // TODO: need to check if this is the player or a replay
             if (!player.isDead()) {
-              // removeTarget(collision);
+              removeTarget(collision);
               player.kill();
+              // TODO: check if all targets are removed first!
               if (i === 0) {
-                timeoutWin = setTimeout(() =>
+                timeouts.push(setTimeout(() =>
                   api.emit('player.win', player.getSerializedInput())
-                , 1000);
+                , 1000));
               }
             }
           });
         }
       }
+    });
+  };
+
+  const createSwitches = blocks => {
+    switches = [];
+    blocks.forEach((row, y) => {
+      row.forEach((cell, x) => {
+        if (cell === SWITCH) {
+          switches.push({ x, y });
+        }
+      });
+    });
+  };
+
+  const createTargets = blocks => {
+    blocks.forEach((row, y) => {
+      row.forEach((cell, x) => {
+        if (cell === TARGET) {
+          targets.push({ x, y });
+        }
+      });
     });
   };
 
@@ -93,15 +159,36 @@ module.exports = scene => {
   };
 
   api.load = (level, assets, inputs) => {
-    clearTimeout(timeoutWin);
-    const playerSpawn = getPlayerSpawn(level.walls);
-    renderer = createRenderer(scene, assets);
-    map.addBlocks(level.walls);
+    const { blocks } = level;
+    const playerSpawn = getPlayerSpawn(blocks);
+
+    timeouts.forEach(clearTimeout);
+    timeouts = [];
+    targets = [];
+    switches = [];
     players = [];
+
     inputs.forEach(input => {
       addPlayer(input, assets, playerSpawn);
     });
-    renderer.addWalls(level.walls);
+
+    map = createMap(scene, assets, blocks[0].length, blocks.length);
+
+    blocks.forEach((row, y) => {
+      row.forEach((cell, x) => {
+        if (cell === WALL || cell === MISSILE) {
+          map.setBlock(x, y, cell);
+        };
+      });
+    });
+
+    createSwitches(blocks);
+    createTargets(blocks);
+    if (switches.length > 0) {
+      addSwitches();
+    } else {
+      addTargets();
+    }
   };
 
   events(api);

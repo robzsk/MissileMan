@@ -46,6 +46,22 @@ const target = (() => {
 	};
 })();
 
+const switchMan = (() => {
+	const clone = {};
+	let cl;
+	return () => {
+		const color = new THREE.Color('rgb(186, 87, 70)');
+		const m = wall();
+		const hex = color.getHexString();
+		if (!clone[hex]) {
+			cl = new THREE.Mesh(m.geometry.clone(), m.material.clone());
+			cl.material.color.setRGB(color.r, color.g, color.b);
+			clone[hex] = cl;
+		}
+		return clone[hex].clone();
+	};
+})();
+
 const missileOnly = (() => {
 	const clone = {};
 	let cl;
@@ -105,5 +121,6 @@ module.exports = {
 		missileOnly,
 		man,
 		missile,
+		switchMan,
 	},
 }

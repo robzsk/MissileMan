@@ -1,24 +1,23 @@
+const createRenderer = require('./renderer');
 const { raw, optimised, add } = require('./configs');
 const createLine = require('./line');
 
-module.exports = () => {
-	let cells = [];
+const initCells = (w, h) => Array.apply(null, Array(h)).map(() => Array(w).fill(0));
+
+module.exports = (scene, assets, width, height) => {
+	const renderer = createRenderer(scene, assets);
+	const cells = initCells(width, height);
 	const tcell = (tx, ty) => cells[ty][tx];
 
-	const clear = () => {
-		cells = [];
-	};
-
-	const removeBlock = (x, y) => {
+	const removeBlock = position => {
+		const { x, y } = position;
 		cells[y][x] = 0;
-	};
-
-	const addBlocks = blocks => {
-		cells = blocks;
+    renderer.removeBlock(position);
 	};
 
 	const setBlock = (x, y, mask) => {
 		cells[y][x] = mask;
+		renderer.addBlock(x, y, mask);
 	};
 
 	const tmpLine = createLine();
@@ -83,9 +82,7 @@ module.exports = () => {
 	};
 
 	return {
-		clear,
 		removeBlock,
-		addBlocks,
 		setBlock,
 		handleCollides,
 		checkCollides,
