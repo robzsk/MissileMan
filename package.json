@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "bezier-easing": "^2.1.0",
+    "howler": "^2.0.15",
     "jquery": "^3.3.1",
     "minivents": "^2.2.0",
     "three": "^0.95.0"

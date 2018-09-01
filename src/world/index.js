@@ -5,6 +5,7 @@ const { PLAYER, WALL, MISSILE, SWITCH, TARGET } = require('./mask');
 const color = new THREE.Color('rgb(55, 116, 196)');
 const createPlayer = require('./player');
 const createMap = require('./map');
+const sound = require('./../sound');
 
 module.exports = scene => {
   let map;
@@ -55,6 +56,7 @@ module.exports = scene => {
       }
     });
     if (switches.length === 0) {
+      sound.unlock();
       addTargets();
     }
   };
@@ -166,6 +168,7 @@ module.exports = scene => {
     timeouts = [];
     targets = [];
     switches = [];
+    players.forEach(p => p.stop());
     players = [];
 
     inputs.forEach(input => {

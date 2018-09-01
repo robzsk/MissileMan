@@ -34,7 +34,7 @@ const target = (() => {
 	const clone = {};
 	let cl;
 	return () => {
-		const color = new THREE.Color('rgb(55, 116, 196)');
+	const color = new THREE.Color('rgb(186, 87, 70)');
 		const m = wall();
 		const hex = color.getHexString();
 		if (!clone[hex]) {
@@ -50,7 +50,7 @@ const switchMan = (() => {
 	const clone = {};
 	let cl;
 	return () => {
-		const color = new THREE.Color('rgb(186, 87, 70)');
+		const color = new THREE.Color('rgb(55, 116, 196)');
 		const m = wall();
 		const hex = color.getHexString();
 		if (!clone[hex]) {

@@ -1,4 +1,5 @@
 const THREE = require('three');
+const sound = require('./../../sound');
 const thrust = require('./thrust');
 const createEntity = require('./entity');
 const createMorph = require('./morph');
@@ -21,6 +22,7 @@ const points = [
 ];
 
 module.exports = (color, scene, assets) => {
+	const engine = sound.engine();
 	const entity = createEntity(points);
 	const avatar = {};
 	let dead = false;
@@ -45,6 +47,7 @@ module.exports = (color, scene, assets) => {
 	const changeToMan = () => {
 		entity.setRotation();
 		flame.stop();
+		engine.stop();
 	};
 
 	const changeToMissile = () => {
@@ -56,6 +59,7 @@ module.exports = (color, scene, assets) => {
 			entity.setRotation(-Math.atan2(v.x, v.y));
 		}
 		flame.start();
+		engine.start();
 	};
 
 	const morph = createMorph(changeToMan, changeToMissile);
@@ -142,8 +146,10 @@ module.exports = (color, scene, assets) => {
 			input.off('input.move', handleInput);
 			flame.stop();
 			explosion.start(entity.position());
+			sound.explosion();
 			avatar.missile.visible = avatar.man.visible = false;
 		}
+		engine.stop();
 	};
 
 	const revive = () => {
@@ -152,6 +158,7 @@ module.exports = (color, scene, assets) => {
 		morph.reset();
 		flame.clear();
 		explosion.clear();
+		engine.stop();
 		setInput(input);
 	};
 
@@ -183,6 +190,10 @@ module.exports = (color, scene, assets) => {
 		}
 	};
 
+	const stop = () => {
+		engine.stop();
+	};
+
 	const getSerializedInput = () => input.serialize();
 
 	return {
@@ -199,5 +210,6 @@ module.exports = (color, scene, assets) => {
 		getPoints: entity.getPoints,
 		handleCollision: entity.handleCollision,
 		isMan: morph.isMan,
+		stop,
 	}
 };

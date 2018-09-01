@@ -1,4 +1,5 @@
 const easing = require('bezier-easing');
+const sound = require('./../../sound');
 
 module.exports = (changeToMan, changeToMissile) => {
 	const ttl = 7;
@@ -15,9 +16,11 @@ module.exports = (changeToMan, changeToMissile) => {
 		if (isMan) {
 			isMan = false;
 			changeToMissile();
+			sound.morphToMissile();
 		} else {
 			isMan = true;
 			changeToMan();
+			sound.morphToMan();
 		}
 	};
 
