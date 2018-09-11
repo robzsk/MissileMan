@@ -1,19 +1,20 @@
-const log = require('electron').remote.getGlobal('console').log;
+// const log = require('electron').remote.getGlobal('console').log;
+require('./styles/app.css');
 
 // this file is a work in progress and serves as a simple entry point for now
 const application = () => {
-	const replayData = require('./fixture/replay');
-	const scene = require('./src/scene')(document.body);
-	const assets = require('./src/assets');
-	const world = require('./src/world')(scene);
-	const levels = require('./src/levels');
-	const createLoop = require('./src/engine').loop;
-	const createInput = require('./src/engine').input;
+	const replayData = require('./../fixture/replay');
+	const scene = require('./scene')(document.body);
+	const assets = require('./assets');
+	const world = require('./world')(scene);
+	const levels = require('./levels');
+	const createLoop = require('./engine').loop;
+	const createInput = require('./engine').input;
 
 	 // add fader before title
-	const fader = require('./src/overlay/fader')(document.body);
-	const title = require('./src/overlay/title')(document.body);
-	const play = require('./src/overlay/play')(document.body);
+	const fader = require('./overlay/fader')(document.body);
+	const title = require('./overlay/title')(document.body);
+	const play = require('./overlay/play')(document.body);
 
 	const replay = createInput({ replay: replayData });
 	const playerInput = createInput({

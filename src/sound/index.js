@@ -1,20 +1,38 @@
 const { Howl } = require('howler');
 
 const exp = new Howl({
-  src: ['./sound/explosion.wav'],
+  src: [require('./../../sound/explosion.wav')],
 });
 
 const unl = new Howl({
-  src: ['./sound/unlock.wav'],
+  src: [require('./../../sound/unlock.wav')],
 });
 
 const morMan = new Howl({
-  src: ['./sound/morphToMan.wav'],
+  src: [require('./../../sound/morphToMan.wav')],
 });
 
 const morMissile = new Howl({
-  src: ['./sound/morphToMissile.wav'],
+  src: [require('./../../sound/morphToMissile.wav')],
 });
+
+const engine = () => {
+  const eng = new Howl({
+    src: [require('./../../sound/engine.wav')],
+    loop: true,
+    volume: 0.75,
+  });
+  const start = () => {
+    eng.play();
+  };
+  const stop = () => {
+    eng.stop();
+  };
+  return {
+    start,
+    stop,
+  };
+};
 
 const unlock = () => {
   unl.play();
@@ -30,23 +48,6 @@ const morphToMan = () => {
 
 const morphToMissile = () => {
   morMissile.play();
-};
-
-const engine = () => {
-  const eng = new Howl({
-    src: ['./sound/engine.wav'],
-    loop: true,
-  });
-  const start = () => {
-    eng.play();
-  };
-  const stop = () => {
-    eng.stop();
-  };
-  return {
-    start,
-    stop,
-  };
 };
 
 const stop = () => {

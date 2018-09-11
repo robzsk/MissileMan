@@ -1,0 +1,12 @@
+@font-face {
+  font-family: default-font;
+  src: url('./../../font/Heytext.ttf') format('truetype');
+  font-weight: normal;
+  color: white;
+}
+
+body {
+  margin: 0px; overflow: hidden;
+  font-family: default-font;
+  color: white;
+}

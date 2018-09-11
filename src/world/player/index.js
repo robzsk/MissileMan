@@ -123,7 +123,7 @@ module.exports = (color, scene, assets) => {
 		}
 
 		flame.update(entity.getPoints()[1], entity.rotation().z);
-		explosion.update();
+		if (dead) explosion.update();
 	};
 
 	const isDead = () => dead;

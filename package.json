@@ -4,19 +4,27 @@
   "description": "Missileman lives! in JavaScript!",
   "main": "index.js",
   "scripts": {
-    "start": "electron ."
-  },
-  "dependencies": {
-    "bezier-easing": "^2.1.0",
-    "howler": "^2.0.15",
-    "jquery": "^3.3.1",
-    "minivents": "^2.2.0",
-    "three": "^0.95.0"
+    "electron": "electron .",
+    "webpack": "webpack --mode development --watch",
+    "start": "webpack --mode development && npm-run-all -p -r electron webpack"
   },
   "devDependencies": {
+    "bezier-easing": "^2.1.0",
+    "css-loader": "^1.0.0",
     "electron": "^2.0.8",
     "electron-reloader": "^0.2.0",
-    "stats.js": "^0.17.0"
+    "file-loader": "^2.0.0",
+    "howler": "^2.0.15",
+    "html-webpack-plugin": "^3.2.0",
+    "jquery": "^3.3.1",
+    "minivents": "^2.2.0",
+    "npm-run-all": "^4.1.3",
+    "stats.js": "^0.17.0",
+    "style-loader": "^0.23.0",
+    "three": "^0.95.0",
+    "url-loader": "^1.1.1",
+    "webpack": "^4.17.2",
+    "webpack-cli": "^3.1.0"
   },
   "repository": {
     "type": "git",
