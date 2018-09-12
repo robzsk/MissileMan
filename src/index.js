@@ -1,4 +1,3 @@
-// const log = require('electron').remote.getGlobal('console').log;
 require('./styles/app.css');
 
 // this file is a work in progress and serves as a simple entry point for now

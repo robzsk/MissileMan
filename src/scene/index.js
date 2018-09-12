@@ -12,17 +12,13 @@ const windowHeight = window.innerHeight;
 
 module.exports = domElement => {
 	const scene = new THREE.Scene();
-	// cam = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 26 - 9, 26),
 	const cam = new THREE.OrthographicCamera(windowWidth * zoom / -2, windowWidth * zoom / 2, windowHeight * zoom / 2, windowHeight * zoom / -2, 0, 1);
-
-	// cam = new THREE.PerspectiveCamera(40, WIDTH / HEIGHT, 1, 10000);
 
 	const ambientLight = new THREE.AmbientLight(0xffffff);
 	const renderer = new THREE.WebGLRenderer({ antialias: true });
 
 	cam.position.set(0, 0, 10);
 	cam.zoom = 28;
-	// cam.position.z = 300;
 	cam.updateProjectionMatrix();
 
 	scene.add(cam);
@@ -43,7 +39,6 @@ module.exports = domElement => {
   };
 
   const follow = player => {
-    // const e = shake.get(edge.get(player));
     const e = shake.get(player);
     cam.position.set(e.x, e.y, zoom);
   };
@@ -57,11 +52,6 @@ module.exports = domElement => {
   };
 
   const clear = () => {
-		// scene.children.forEach(child => {
-		// 	if (child !== ambientLight) {
-		// 		scene.remove(child);
-		// 	}
-		// })
 		while (scene.children.length > 0) {
 			scene.remove(scene.children[0]);
 		}
